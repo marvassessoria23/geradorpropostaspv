@@ -1,89 +1,87 @@
 
 
-# Redesign: Split-Panel Editor with Form-Based Editing and Page Management
+# Complete Overhaul: Premium Legal Proposal Generator
 
 ## Overview
 
-Major refactor of the proposal editor from inline-editing on the preview to a professional split-panel interface: form fields on the left, live preview on the right. Add page management (add/duplicate/remove), automatic numbering, view mode toggle, and embed the uploaded logo.
+Full rewrite of all page components, types, editor panel, and CSS to match the original Google Slides design with exact colors, new "Avaliações" section, Lato font, and proper slide structure.
 
-## Architecture
+## Key Changes
 
-```text
-┌─────────────────────────────────────────────────┐
-│  Header (toolbar: settings, PDF, view toggle)   │
-├──────────────────────┬──────────────────────────┤
-│   Edit Panel (40%)   │   Preview Panel (60%)    │
-│                      │                          │
-│  Section tabs/nav    │  Live proposal render    │
-│  Form fields         │  (pages or continuous)   │
-│  Page management     │                          │
-│  Team management     │                          │
-└──────────────────────┴──────────────────────────┘
-```
+### 1. Update types.ts
+- Add `PageType: "avaliacoes"` 
+- Add new fields: `nomeEscritorio`, `subtituloEscritorio`, `logoImage` (upload), `fotoSobre`, `fotoProximosPassos` (rename from `fechamentoImage`)
+- Add `avaliacoes` data: `notaGoogle`, `totalAvaliacoes`, `avaliacoes: Array<{id, nome, nota, texto}>`
+- Add `youtube`, `linkedin`, `tiktok` to contact fields
+- Rename `fechamentoImage` to `fotoProximosPassos`, `contatoImage` to `fotoContato`
+- Update `defaultPages` to include `avaliacoes` between `equipe` and `investimento`
+- Update `PAGE_TYPE_LABELS` accordingly
 
-## Changes
+### 2. Update index.css - Design tokens and fonts
+- Replace `Inter` with `Lato` in Google Fonts import
+- Update CSS variables to exact colors from the spec:
+  - `--proposal-dark: #0d2b45` (was `hsl(200 55% 18%)`)
+  - `--proposal-cream: #f5f0e8`
+  - `--proposal-gold: #c9a84c`
+  - `--proposal-gold-light: #e8c96a`
+  - `--proposal-text-dark: #1a3a5c`
+- Update `.font-body` to use `'Lato', sans-serif`
+- Change `.proposal-page` to use fixed dimensions: `width: 1280px; min-height: 720px; overflow: visible` (no aspect-ratio constraint)
+- Add `.proposal-page-light` with `#f5f0e8` background and watermark
+- Update `.page-number` to white text on gold circle, bottom-left
+- Add dark slide geometric decorations (circles/diamonds at low opacity)
 
-### 1. Copy logo to project
-- Copy `user-uploads://LOGO_PAIVA_NUNES.png` to `src/assets/logo-paiva-nunes.png`
-- Use in PageCover and header instead of SVG placeholder
+### 3. Update tailwind.config.ts
+- Update color values to match hex spec
 
-### 2. Update `types.ts` - Add page management types
-- Add `ProposalPage` interface with `id`, `type` (section key), `visible`, `order`
-- Add `pages: ProposalPage[]` to `ProposalData` to replace `visibleSections`
-- Add `viewMode: "pages" | "continuous"` to `ProposalData`
-- Keep all existing content fields
+### 4. Rewrite all 10 page components
 
-### 3. Create `EditorPanel.tsx` - Left-side form panel
-- Sidebar with section navigation (accordion or tabs per page type)
-- For each section, render appropriate form fields:
-  - **Capa**: client name, subtitle
-  - **Diagnostico**: greeting, intro, body, jurisprudencia, conclusao (all as textareas)
-  - **Estrategia**: intro, each movimento's fields
-  - **Argumentos**: table editor (add/remove rows)
-  - **Sobre**: institutional texts
-  - **Equipe**: team member cards with photo upload, name, role, category
-  - **Investimento**: fee fields
-  - **Fechamento**: steps list, CTA
-  - **Contato**: phone, social, website, slogan
-- Page management buttons per section: duplicate, remove, move up/down
-- "Add Page" button that lets user pick a page type to insert
-- Settings section: text size, view mode toggle
+**PageCover (dark)**: Split layout - left side with title "Proposta de Honorários" in gold, client name in white, logo at bottom-left. Right side: uploaded photo with gradient overlay. Geometric decorations on dark bg.
 
-### 4. Refactor `ProposalEditor.tsx`
-- Split layout into two panels using CSS grid/flex (left 40%, right 60%)
-- Left: `<EditorPanel>` with scrollable form
-- Right: scrollable preview area rendering all visible pages
-- Remove inline `EditableText` from all page components - pages become read-only display
-- Automatic page numbering: compute from visible pages array index
-- View mode toggle: "pages" (with gaps between pages) vs "continuous" (no gaps, scroll)
+**PageDiagnostico (light)**: Gold badge bar "CONTEXTO DA DEMANDA", title, greeting, paragraphs. Decorative circles top-right. Light bg `#f5f0e8`.
 
-### 5. Update all Page components to display-only
-- Remove `EditableText` imports, replace with plain elements (`<p>`, `<h2>`, etc.)
-- Remove `onChange` prop - pages only receive `data` for display
-- Add `pageNumber` prop for automatic numbering
-- **PageCover**: use imported logo image instead of SVG
-- All pages keep exact same visual styling
+**PageEstrategia (light, split)**: Gold sidebar bar + title + content. Right side optional photo. Multiple sub-pages for movements. Light bg with gold vertical bar accent.
 
-### 6. Page management logic in ProposalEditor
-- `addPage(type)`: append a new page of given type, auto-number
-- `duplicatePage(id)`: clone page data and insert after original
-- `removePage(id)`: remove page, re-number remaining
-- Pages stored as ordered array; numbering derived from index
+**PageArgumentos (light)**: Large H1 title, 3-column table with navy header, alternating cream rows.
 
-### 7. Automatic page break / overflow handling
-- For long-content sections (diagnostico, estrategia), measure content height
-- If content exceeds page aspect-ratio bounds, split into continuation pages in the preview
-- Use CSS `break-inside: avoid` for PDF generation
+**PageSobre (light)**: Gold sidebar + title + text + CTA button. Optional right photo.
 
-### 8. View mode toggle
-- Add toggle button in header: "Páginas" / "Contínuo"
-- Pages mode: each page rendered with gap, aspect-ratio 16:9
-- Continuous mode: pages stack without gaps, full-width scrollable document
+**PageEquipe (dark)**: Dark bg, gold title, team grid by category. Member photos 80x80 circular with gold border. Grid: gestao max 4 cols, juridico/admin max 7 cols.
+
+**PageAvaliacoes (NEW, gold bg `#e8c96a`)**: Google rating display, grid of review cards with reviewer name, star rating, text.
+
+**PageInvestimento (dark)**: Two side-by-side cards, footer with payment info.
+
+**PageFechamento/ProximosPassos (dark, split)**: Vertical timeline with numbered steps, CTA text. Right side: uploaded photo.
+
+**PageContato (light, split)**: Left side: uploaded photo. Right side: logo, contact icons (phone, instagram, youtube, linkedin, tiktok, website), text, slogan.
+
+### 5. Rewrite EditorPanel.tsx
+- Add tabs for all sections including new "Avaliações" and "Aparência"
+- **Aparência tab**: color pickers for `corFundo` (dark bg) and `corDestaque` (gold), logo size slider, logo position select
+- **Capa tab**: add `nomeEscritorio`, `subtituloEscritorio`, `logoImage` upload
+- **Avaliações tab**: `notaGoogle`, `totalAvaliacoes`, dynamic array of reviews with add/remove
+- **Contato tab**: add `youtube`, `linkedin`, `tiktok` fields
+- **Sobre tab**: add `fotoSobre` upload
+- Keep all existing page management (reorder, duplicate, remove, visibility)
+
+### 6. Update ProposalEditor.tsx
+- Add `PageAvaliacoes` import and render case
+- Update page numbering to account for new page
+- Preview scaling: use `transform: scale()` based on container width for proper slide proportions
+- PDF: await `document.fonts.ready` before capture, use scale:2
+
+### 7. Create PageAvaliacoes.tsx (new)
+- Gold/yellow background (`#e8c96a`)
+- Title "O que nossos clientes dizem"
+- Google rating badge (star + number + total)
+- Grid of review cards (white bg, reviewer name, stars, text)
+- Page number circle
 
 ## Technical Notes
-- All editing happens via controlled form inputs (Input, Textarea from shadcn/ui)
-- Preview updates in real-time via React state
-- No AI dependency - pure client-side logic
-- PDF generation unchanged (html2canvas + jsPDF from preview)
-- Logo imported as ES module from `src/assets/`
+- All slides use fixed 1280x720 reference, scaled in preview via CSS transform
+- Overflow: visible on all slides (never clip content)
+- No changes to the split-panel architecture (left form / right preview)
+- Lato font loaded from Google Fonts alongside Playfair Display
+- All image uploads remain base64 via FileReader
 
