@@ -1,33 +1,13 @@
 import React from "react";
-import { ProposalData, ArgumentRow } from "./types";
-import { Plus, Trash2 } from "lucide-react";
+import { ProposalData } from "./types";
 
 interface Props {
   data: ProposalData;
-  onChange: (updates: Partial<ProposalData>) => void;
   textSizeClass: string;
+  pageNumber: number;
 }
 
-const PageArgumentos: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
-  const updateArg = (id: string, field: keyof ArgumentRow, value: string) => {
-    onChange({
-      argumentos: data.argumentos.map((a) => (a.id === id ? { ...a, [field]: value } : a)),
-    });
-  };
-
-  const addArg = () => {
-    onChange({
-      argumentos: [
-        ...data.argumentos,
-        { id: Date.now().toString(), argumento: "Novo argumento", fundamento: "Fundamento", observacao: "Observação" },
-      ],
-    });
-  };
-
-  const removeArg = (id: string) => {
-    onChange({ argumentos: data.argumentos.filter((a) => a.id !== id) });
-  };
-
+const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
   return (
     <div className="proposal-page geometric-bg">
       <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
@@ -44,55 +24,21 @@ const PageArgumentos: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
                 <th className={`text-left p-3 font-bold text-proposal-dark font-body ${textSizeClass}`}>Argumento</th>
                 <th className={`text-left p-3 font-bold text-proposal-dark font-body ${textSizeClass}`}>Fundamento Legal</th>
                 <th className={`text-left p-3 font-bold text-proposal-dark font-body ${textSizeClass}`}>Observação</th>
-                <th className="w-10 no-print"></th>
               </tr>
             </thead>
             <tbody>
               {data.argumentos.map((arg) => (
-                <tr key={arg.id} className="border-b border-proposal-dark/10 group">
-                  <td className="p-3">
-                    <input
-                      value={arg.argumento}
-                      onChange={(e) => updateArg(arg.id, "argumento", e.target.value)}
-                      className={`${textSizeClass} bg-transparent editable-field w-full font-body text-proposal-text-dark`}
-                    />
-                  </td>
-                  <td className="p-3">
-                    <input
-                      value={arg.fundamento}
-                      onChange={(e) => updateArg(arg.id, "fundamento", e.target.value)}
-                      className={`${textSizeClass} bg-transparent editable-field w-full font-body text-proposal-text-dark`}
-                    />
-                  </td>
-                  <td className="p-3">
-                    <input
-                      value={arg.observacao}
-                      onChange={(e) => updateArg(arg.id, "observacao", e.target.value)}
-                      className={`${textSizeClass} bg-transparent editable-field w-full font-body text-proposal-text-dark`}
-                    />
-                  </td>
-                  <td className="no-print">
-                    <button
-                      onClick={() => removeArg(arg.id)}
-                      className="opacity-0 group-hover:opacity-100 text-destructive p-1 transition-opacity"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </td>
+                <tr key={arg.id} className="border-b border-proposal-dark/10">
+                  <td className={`p-3 ${textSizeClass} font-body text-proposal-text-dark`}>{arg.argumento}</td>
+                  <td className={`p-3 ${textSizeClass} font-body text-proposal-text-dark`}>{arg.fundamento}</td>
+                  <td className={`p-3 ${textSizeClass} font-body text-proposal-text-dark`}>{arg.observacao}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          <button
-            onClick={addArg}
-            className="mt-4 flex items-center gap-2 text-proposal-gold hover:text-proposal-dark transition-colors font-body text-sm no-print"
-          >
-            <Plus size={16} /> Adicionar argumento
-          </button>
         </div>
 
-        <div className="page-number">7</div>
+        <div className="page-number">{pageNumber}</div>
       </div>
     </div>
   );

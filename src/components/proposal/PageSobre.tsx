@@ -1,14 +1,13 @@
 import React from "react";
-import EditableText from "./EditableText";
 import { ProposalData } from "./types";
 
 interface Props {
   data: ProposalData;
-  onChange: (updates: Partial<ProposalData>) => void;
   textSizeClass: string;
+  pageNumber: number;
 }
 
-const PageSobre: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
+const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
   return (
     <div className="proposal-page geometric-bg">
       <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
@@ -20,24 +19,9 @@ const PageSobre: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
         </div>
 
         <div className="flex-1 space-y-4">
-          <EditableText
-            value={data.sobreText1}
-            onChange={(v) => onChange({ sobreText1: v })}
-            className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify`}
-            multiline
-          />
-          <EditableText
-            value={data.sobreText2}
-            onChange={(v) => onChange({ sobreText2: v })}
-            className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify`}
-            multiline
-          />
-          <EditableText
-            value={data.sobreText3}
-            onChange={(v) => onChange({ sobreText3: v })}
-            className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify`}
-            multiline
-          />
+          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText1}</p>
+          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText2}</p>
+          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText3}</p>
         </div>
 
         <div className="mt-6 flex justify-center">
@@ -47,7 +31,7 @@ const PageSobre: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
           </div>
         </div>
 
-        <div className="page-number">8</div>
+        <div className="page-number">{pageNumber}</div>
       </div>
     </div>
   );

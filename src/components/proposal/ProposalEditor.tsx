@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback } from "react";
-import { ProposalData, defaultProposalData } from "./types";
+import { ProposalData, defaultProposalData, PageType } from "./types";
+import EditorPanel from "./EditorPanel";
 import PageCover from "./PageCover";
 import PageDiagnostico from "./PageDiagnostico";
 import PageEstrategia from "./PageEstrategia";
@@ -9,9 +10,10 @@ import PageEquipe from "./PageEquipe";
 import PageInvestimento from "./PageInvestimento";
 import PageFechamento from "./PageFechamento";
 import PageContato from "./PageContato";
-import { FileDown, Eye, Settings, ChevronDown, ChevronUp } from "lucide-react";
+import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
 import html2canvas from "html2canvas-pro";
 import { jsPDF } from "jspdf";
+import logoImg from "@/assets/logo-paiva-nunes.png";
 
 const TEXT_SIZE_MAP = {
   small: "text-xs md:text-sm",
@@ -19,37 +21,15 @@ const TEXT_SIZE_MAP = {
   large: "text-base md:text-lg",
 };
 
-const SECTIONS = [
-  { key: "cover", label: "Capa" },
-  { key: "diagnostico", label: "Diagnóstico" },
-  { key: "estrategia", label: "Estratégia Jurídica" },
-  { key: "argumentos", label: "Argumentos" },
-  { key: "sobre", label: "Sobre o Escritório" },
-  { key: "equipe", label: "Equipe" },
-  { key: "investimento", label: "Investimento" },
-  { key: "fechamento", label: "Próximos Passos" },
-  { key: "contato", label: "Contato" },
-];
-
 const ProposalEditor: React.FC = () => {
   const [data, setData] = useState<ProposalData>(defaultProposalData);
-  const [showSettings, setShowSettings] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
-
-  const toggleSection = (key: string) => {
-    setData((prev) => ({
-      ...prev,
-      visibleSections: {
-        ...prev.visibleSections,
-        [key]: !prev.visibleSections[key],
-      },
-    }));
-  };
 
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
@@ -67,11 +47,6 @@ const ProposalEditor: React.FC = () => {
 
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement;
-
-        // Hide no-print elements temporarily
-        const noPrintEls = page.querySelectorAll(".no-print");
-        noPrintEls.forEach((el) => ((el as HTMLElement).style.display = "none"));
-
         const canvas = await html2canvas(page, {
           scale: 2,
           useCORS: true,
@@ -80,10 +55,7 @@ const ProposalEditor: React.FC = () => {
           logging: false,
         });
 
-        noPrintEls.forEach((el) => ((el as HTMLElement).style.display = ""));
-
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, "JPEG", 0, 0, pageWidth, pageHeight);
       }
@@ -96,135 +68,104 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
+  // Compute page numbers automatically
+  const visiblePages = data.pages.filter((p) => p.visible);
+  let globalPageCounter = 0;
+
+  const renderPage = (pageType: PageType, pageNumber: number) => {
+    switch (pageType) {
+      case "cover":
+        return <PageCover data={data} pageNumber={pageNumber} />;
+      case "diagnostico":
+        return <PageDiagnostico data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      case "estrategia":
+        return <PageEstrategia data={data} textSizeClass={textSizeClass} startPageNumber={pageNumber} />;
+      case "argumentos":
+        return <PageArgumentos data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      case "sobre":
+        return <PageSobre data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      case "equipe":
+        return <PageEquipe data={data} pageNumber={pageNumber} />;
+      case "investimento":
+        return <PageInvestimento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      case "fechamento":
+        return <PageFechamento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      case "contato":
+        return <PageContato data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+      default:
+        return null;
+    }
+  };
+
+  // Estrategia renders 4 sub-pages
+  const getPageSlotCount = (type: PageType) => (type === "estrategia" ? 4 : 1);
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top bar */}
-      <header className="sticky top-0 z-50 bg-proposal-dark border-b border-proposal-gold/20 px-4 py-3 flex items-center justify-between no-print">
+    <div className="h-screen flex flex-col bg-proposal-dark">
+      {/* Header */}
+      <header className="flex-shrink-0 border-b border-proposal-gold/20 px-4 py-2.5 flex items-center justify-between bg-proposal-dark z-50">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 border border-proposal-gold/50 rounded flex items-center justify-center">
-            <svg viewBox="0 0 40 40" className="w-5 h-5" fill="none" stroke="hsl(42, 65%, 55%)" strokeWidth="1.5">
-              <path d="M20 5 L35 15 L30 35 L10 35 L5 15 Z" />
-              <path d="M20 10 L30 17 L27 32 L13 32 L10 17 Z" />
-            </svg>
-          </div>
-          <h1 className="font-display text-proposal-text-light text-lg tracking-wider">
+          <button
+            onClick={() => setPanelOpen(!panelOpen)}
+            className="p-2 rounded-lg border border-proposal-gold/30 text-proposal-gold hover:bg-proposal-gold/10 transition-colors"
+          >
+            {panelOpen ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
+          </button>
+          <img src={logoImg} alt="Paiva Nunes" className="w-7 h-7 object-contain" />
+          <h1 className="font-display text-proposal-text-light text-base tracking-wider">
             Gerador de Propostas
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-proposal-gold/30 text-proposal-gold hover:bg-proposal-gold/10 transition-colors font-body text-sm"
-          >
-            <Settings size={16} />
-            Configurações
-            {showSettings ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-          <button
-            onClick={generatePDF}
-            disabled={generating}
-            className="flex items-center gap-2 px-6 py-2 rounded-lg bg-proposal-gold text-proposal-dark font-body font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
-          >
-            <FileDown size={16} />
-            {generating ? "Gerando..." : "Gerar PDF"}
-          </button>
-        </div>
+        <button
+          onClick={generatePDF}
+          disabled={generating}
+          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-proposal-gold text-proposal-dark font-body font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+        >
+          <FileDown size={16} />
+          {generating ? "Gerando..." : "Gerar PDF"}
+        </button>
       </header>
 
-      {/* Settings panel */}
-      {showSettings && (
-        <div className="no-print bg-proposal-dark/95 border-b border-proposal-gold/20 px-6 py-4">
-          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Text size */}
-            <div>
-              <h3 className="text-proposal-gold font-body font-semibold text-sm mb-2">Tamanho do Texto</h3>
-              <div className="flex gap-2">
-                {(["small", "medium", "large"] as const).map((size) => (
-                  <button
-                    key={size}
-                    onClick={() => updateData({ textSize: size })}
-                    className={`px-4 py-1.5 rounded font-body text-sm transition-colors ${
-                      data.textSize === size
-                        ? "bg-proposal-gold text-proposal-dark"
-                        : "border border-proposal-gold/30 text-proposal-text-light hover:bg-proposal-gold/10"
-                    }`}
-                  >
-                    {size === "small" ? "Pequeno" : size === "medium" ? "Médio" : "Grande"}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Visible sections */}
-            <div>
-              <h3 className="text-proposal-gold font-body font-semibold text-sm mb-2">Seções Visíveis</h3>
-              <div className="flex flex-wrap gap-2">
-                {SECTIONS.map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => toggleSection(s.key)}
-                    className={`px-3 py-1 rounded-full font-body text-xs transition-colors ${
-                      data.visibleSections[s.key]
-                        ? "bg-proposal-gold/20 text-proposal-gold border border-proposal-gold/40"
-                        : "bg-proposal-dark border border-proposal-text-light/20 text-proposal-text-light/40"
-                    }`}
-                  >
-                    {data.visibleSections[s.key] ? <Eye size={10} className="inline mr-1" /> : null}
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Body */}
+      <div className="flex-1 flex min-h-0">
+        {/* Editor Panel */}
+        {panelOpen && (
+          <div className="w-[380px] flex-shrink-0 border-r border-proposal-gold/20 overflow-hidden">
+            <EditorPanel data={data} onChange={updateData} />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Preview */}
-      <div className="max-w-5xl mx-auto py-8 px-4">
-        <div ref={previewRef} className="space-y-6">
-          {data.visibleSections.cover && (
-            <div data-proposal-page>
-              <PageCover data={data} onChange={updateData} />
-            </div>
-          )}
-          {data.visibleSections.diagnostico && (
-            <div data-proposal-page>
-              <PageDiagnostico data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
-          {data.visibleSections.estrategia && (
-            <PageEstrategia data={data} onChange={updateData} textSizeClass={textSizeClass} />
-          )}
-          {data.visibleSections.argumentos && (
-            <div data-proposal-page>
-              <PageArgumentos data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
-          {data.visibleSections.sobre && (
-            <div data-proposal-page>
-              <PageSobre data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
-          {data.visibleSections.equipe && (
-            <div data-proposal-page>
-              <PageEquipe data={data} onChange={updateData} />
-            </div>
-          )}
-          {data.visibleSections.investimento && (
-            <div data-proposal-page>
-              <PageInvestimento data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
-          {data.visibleSections.fechamento && (
-            <div data-proposal-page>
-              <PageFechamento data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
-          {data.visibleSections.contato && (
-            <div data-proposal-page>
-              <PageContato data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
-          )}
+        {/* Preview */}
+        <div className="flex-1 overflow-y-auto bg-proposal-dark/50 p-6">
+          <div
+            ref={previewRef}
+            className={`max-w-5xl mx-auto ${data.viewMode === "pages" ? "space-y-6" : "space-y-0"}`}
+          >
+            {visiblePages.map((page) => {
+              globalPageCounter++;
+              const currentPageNum = globalPageCounter;
+
+              // Estrategia takes 4 slots
+              if (page.type === "estrategia") {
+                globalPageCounter += 3;
+              }
+
+              // Wrap non-estrategia in data-proposal-page
+              if (page.type === "estrategia") {
+                return (
+                  <div key={page.id}>
+                    {renderPage(page.type, currentPageNum)}
+                  </div>
+                );
+              }
+
+              return (
+                <div key={page.id} data-proposal-page>
+                  {renderPage(page.type, currentPageNum)}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
