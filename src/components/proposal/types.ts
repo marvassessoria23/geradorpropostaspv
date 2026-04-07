@@ -46,6 +46,21 @@ export interface ProposalData {
   clientName: string;
   coverSubtitle: string;
 
+  // Images
+  coverImage: string | null;
+  advogadoPhoto: string | null;
+  fechamentoImage: string | null;
+  contatoImage: string | null;
+
+  // Logo
+  logoSize: number; // 40-200 px
+  logoPosition: "top" | "center" | "bottom";
+
+  // Theme
+  themeDarkColor: string;
+  themeGoldColor: string;
+  themeMode: "dark" | "light";
+
   // Page 2 - Diagnóstico
   diagnosticoTitle: string;
   diagnosticoGreeting: string;
@@ -125,6 +140,18 @@ export const defaultPages: ProposalPage[] = [
 export const defaultProposalData: ProposalData = {
   clientName: "Luciano Moraes Bernardes",
   coverSubtitle: "PAIVA NUNES\nDireito Imobiliário",
+
+  coverImage: null,
+  advogadoPhoto: null,
+  fechamentoImage: null,
+  contatoImage: null,
+
+  logoSize: 80,
+  logoPosition: "bottom",
+
+  themeDarkColor: "#1a3a5c",
+  themeGoldColor: "#c9a84c",
+  themeMode: "dark",
 
   diagnosticoTitle: "1. APRESENTAÇÃO E DIAGNÓSTICO GERAL",
   diagnosticoGreeting: "Prezado Sr. Luciano,",
