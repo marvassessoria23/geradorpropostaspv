@@ -1,17 +1,18 @@
 import React from "react";
-import EditableText from "./EditableText";
 import { ProposalData } from "./types";
 
 interface Props {
   data: ProposalData;
-  onChange: (updates: Partial<ProposalData>) => void;
   textSizeClass: string;
+  startPageNumber: number;
 }
 
-const PageEstrategia: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
+const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber }) => {
+  let pn = startPageNumber;
+
   return (
     <>
-      {/* Page 3 */}
+      {/* Page - Intro + Movimento 1 part 1 */}
       <div data-proposal-page>
         <div className="proposal-page geometric-bg">
           <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
@@ -24,70 +25,70 @@ const PageEstrategia: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
             <h3 className="font-bold text-proposal-dark text-xl mb-3 font-body">
               2. ESTRATÉGIA JURÍDICA PROPOSTA
             </h3>
-            <EditableText value={data.estrategiaIntro} onChange={(v) => onChange({ estrategiaIntro: v })} className={`${textSizeClass} text-proposal-text-dark mb-5 font-body leading-relaxed`} multiline />
-            <EditableText value={data.movimento1Title} onChange={(v) => onChange({ movimento1Title: v })} className="font-bold text-proposal-dark text-lg mb-2 font-body" tag="h3" />
+            <p className={`${textSizeClass} text-proposal-text-dark mb-5 font-body leading-relaxed whitespace-pre-wrap`}>{data.estrategiaIntro}</p>
+            <h3 className="font-bold text-proposal-dark text-lg mb-2 font-body">{data.movimento1Title}</h3>
             <div className="flex items-start gap-2 mb-3">
               <span className="text-proposal-dark mt-1">•</span>
-              <EditableText value={data.movimento1Intro} onChange={(v) => onChange({ movimento1Intro: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
+              <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento1Intro}</p>
             </div>
             <div className="ml-4 space-y-3">
-              <div><span className="font-semibold text-proposal-dark">1. </span><EditableText value={data.movimento1Item1} onChange={(v) => onChange({ movimento1Item1: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed inline`} tag="span" multiline /></div>
-              <div><span className="font-semibold text-proposal-dark">2. </span><EditableText value={data.movimento1Item2} onChange={(v) => onChange({ movimento1Item2: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed inline`} tag="span" multiline /></div>
+              <div><span className="font-semibold text-proposal-dark">1. </span><span className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`}>{data.movimento1Item1}</span></div>
+              <div><span className="font-semibold text-proposal-dark">2. </span><span className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`}>{data.movimento1Item2}</span></div>
             </div>
-            <div className="page-number">3</div>
+            <div className="page-number">{pn}</div>
           </div>
         </div>
       </div>
 
-      {/* Page 4 */}
+      {/* Page - Movimento 1 part 2 */}
       <div data-proposal-page>
         <div className="proposal-page geometric-bg">
           <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
             <div className="ml-4 mb-6">
               <span className="font-semibold text-proposal-dark">3. </span>
-              <EditableText value={data.movimento1Item3} onChange={(v) => onChange({ movimento1Item3: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed inline`} tag="span" multiline />
+              <span className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`}>{data.movimento1Item3}</span>
             </div>
-            <EditableText value={data.movimento1Resultado} onChange={(v) => onChange({ movimento1Resultado: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
-            <div className="page-number">4</div>
+            <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento1Resultado}</p>
+            <div className="page-number">{pn + 1}</div>
           </div>
         </div>
       </div>
 
-      {/* Page 5 - Movimento 2 */}
+      {/* Page - Movimento 2 */}
       <div data-proposal-page>
         <div className="proposal-page geometric-bg">
           <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
-            <EditableText value={data.movimento2Title} onChange={(v) => onChange({ movimento2Title: v })} className="font-bold text-proposal-dark text-xl mb-6 font-body" tag="h3" />
+            <h3 className="font-bold text-proposal-dark text-xl mb-6 font-body">{data.movimento2Title}</h3>
             <div className="space-y-5">
               <div>
                 <h4 className="font-bold text-proposal-dark text-lg mb-1 font-body">Consignação em Pagamento:</h4>
-                <EditableText value={data.movimento2Consignacao} onChange={(v) => onChange({ movimento2Consignacao: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
+                <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento2Consignacao}</p>
               </div>
               <div>
                 <h4 className="font-bold text-proposal-dark text-lg mb-1 font-body">Obrigação de Fazer:</h4>
-                <EditableText value={data.movimento2Obrigacao} onChange={(v) => onChange({ movimento2Obrigacao: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
+                <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento2Obrigacao}</p>
               </div>
               <div>
                 <h4 className="font-bold text-proposal-dark text-lg mb-1 font-body">Pedidos Acessórios:</h4>
-                <EditableText value={data.movimento2Pedidos} onChange={(v) => onChange({ movimento2Pedidos: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
+                <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento2Pedidos}</p>
               </div>
               <div>
                 <h4 className="font-bold text-proposal-dark text-lg mb-1 font-body">Observações:</h4>
-                <EditableText value={data.movimento2Observacoes} onChange={(v) => onChange({ movimento2Observacoes: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
+                <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento2Observacoes}</p>
               </div>
             </div>
-            <div className="page-number">5</div>
+            <div className="page-number">{pn + 2}</div>
           </div>
         </div>
       </div>
 
-      {/* Page 6 - Movimento 3 */}
+      {/* Page - Movimento 3 */}
       <div data-proposal-page>
         <div className="proposal-page geometric-bg">
           <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
-            <EditableText value={data.movimento3Title} onChange={(v) => onChange({ movimento3Title: v })} className="font-bold text-proposal-dark text-xl mb-4 font-body" tag="h3" />
-            <EditableText value={data.movimento3Body} onChange={(v) => onChange({ movimento3Body: v })} className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed`} multiline />
-            <div className="page-number">6</div>
+            <h3 className="font-bold text-proposal-dark text-xl mb-4 font-body">{data.movimento3Title}</h3>
+            <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed whitespace-pre-wrap`}>{data.movimento3Body}</p>
+            <div className="page-number">{pn + 3}</div>
           </div>
         </div>
       </div>

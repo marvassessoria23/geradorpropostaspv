@@ -13,6 +13,35 @@ export interface ArgumentRow {
   observacao: string;
 }
 
+export type PageType =
+  | "cover"
+  | "diagnostico"
+  | "estrategia"
+  | "argumentos"
+  | "sobre"
+  | "equipe"
+  | "investimento"
+  | "fechamento"
+  | "contato";
+
+export interface ProposalPage {
+  id: string;
+  type: PageType;
+  visible: boolean;
+}
+
+export const PAGE_TYPE_LABELS: Record<PageType, string> = {
+  cover: "Capa",
+  diagnostico: "Diagnóstico",
+  estrategia: "Estratégia Jurídica",
+  argumentos: "Argumentos",
+  sobre: "Sobre o Escritório",
+  equipe: "Equipe",
+  investimento: "Investimento",
+  fechamento: "Próximos Passos",
+  contato: "Contato",
+};
+
 export interface ProposalData {
   clientName: string;
   coverSubtitle: string;
@@ -77,8 +106,21 @@ export interface ProposalData {
 
   // Settings
   textSize: "small" | "medium" | "large";
-  visibleSections: Record<string, boolean>;
+  viewMode: "pages" | "continuous";
+  pages: ProposalPage[];
 }
+
+export const defaultPages: ProposalPage[] = [
+  { id: "p1", type: "cover", visible: true },
+  { id: "p2", type: "diagnostico", visible: true },
+  { id: "p3", type: "estrategia", visible: true },
+  { id: "p4", type: "argumentos", visible: true },
+  { id: "p5", type: "sobre", visible: true },
+  { id: "p6", type: "equipe", visible: true },
+  { id: "p7", type: "investimento", visible: true },
+  { id: "p8", type: "fechamento", visible: true },
+  { id: "p9", type: "contato", visible: true },
+];
 
 export const defaultProposalData: ProposalData = {
   clientName: "Luciano Moraes Bernardes",
@@ -124,36 +166,11 @@ export const defaultProposalData: ProposalData = {
     "Caso haja risco concreto de ação de reintegração de posse, recomendamos requerer medida cautelar para assegurar sua permanência no imóvel durante o trâmite da ação principal. Esta medida pode ser requerida quando há contrato válido e posse mansa e pacífica, ambas presentes em seu caso. A concessão dessa medida dependerá da apreciação do juiz sobre a probabilidade do direito invocado e o risco de dano irreparável.",
 
   argumentos: [
-    {
-      id: "1",
-      argumento: "Purga da Mora Viável",
-      fundamento: "Lei 9.514/1997 + Lei 13.465/2017 + STJ 11/05/2023",
-      observacao: "Argumento relevante enquanto propriedade não consolidada",
-    },
-    {
-      id: "2",
-      argumento: "Adimplemento Substancial",
-      fundamento: "CC art. 422 + STJ 2022",
-      observacao: "Merece consideração na avaliação da proporcionalidade",
-    },
-    {
-      id: "3",
-      argumento: "Elementos de Má-Fé",
-      fundamento: "CC arts. 187 e 422 + Áudios",
-      observacao: "Requer apreciação judicial",
-    },
-    {
-      id: "4",
-      argumento: "Redução de Cláusula Penal",
-      fundamento: "CC art. 413 + STJ 24/05/2021",
-      observacao: "Possível se houver condenação em penalidade",
-    },
-    {
-      id: "5",
-      argumento: "Enriquecimento Sem Causa",
-      fundamento: "CC art. 884",
-      observacao: "Argumento complementar",
-    },
+    { id: "1", argumento: "Purga da Mora Viável", fundamento: "Lei 9.514/1997 + Lei 13.465/2017 + STJ 11/05/2023", observacao: "Argumento relevante enquanto propriedade não consolidada" },
+    { id: "2", argumento: "Adimplemento Substancial", fundamento: "CC art. 422 + STJ 2022", observacao: "Merece consideração na avaliação da proporcionalidade" },
+    { id: "3", argumento: "Elementos de Má-Fé", fundamento: "CC arts. 187 e 422 + Áudios", observacao: "Requer apreciação judicial" },
+    { id: "4", argumento: "Redução de Cláusula Penal", fundamento: "CC art. 413 + STJ 24/05/2021", observacao: "Possível se houver condenação em penalidade" },
+    { id: "5", argumento: "Enriquecimento Sem Causa", fundamento: "CC art. 884", observacao: "Argumento complementar" },
   ],
 
   sobreTitle: "SOBRE A PAIVA NUNES",
@@ -188,8 +205,7 @@ export const defaultProposalData: ProposalData = {
   honorarioAntecipado2: "R$ 8.200,00",
   honorarioAntecipado2Desc: "Ação judicial, se necessário",
   honorarioExito1: "Se resolvido pela via extrajudicial, sem percentual de êxito",
-  honorarioExito2:
-    "Se pela via judicial, 10% sobre o proveito econômico, proteção patrimonial",
+  honorarioExito2: "Se pela via judicial, 10% sobre o proveito econômico, proteção patrimonial",
   parcelamento: "Os parcelamentos serão por cartão de crédito.",
   validadeProposta:
     "Esta proposta tem validade de 30 dias. As despesas com custas judiciais, cartorárias e eventuais diligências não estão incluídas nos valores indicados.",
@@ -212,15 +228,6 @@ export const defaultProposalData: ProposalData = {
   contatoSlogan: "Paiva Nunes: defendendo seus Direitos Reais!",
 
   textSize: "medium",
-  visibleSections: {
-    cover: true,
-    diagnostico: true,
-    estrategia: true,
-    argumentos: true,
-    sobre: true,
-    equipe: true,
-    investimento: true,
-    fechamento: true,
-    contato: true,
-  },
+  viewMode: "pages",
+  pages: defaultPages,
 };
