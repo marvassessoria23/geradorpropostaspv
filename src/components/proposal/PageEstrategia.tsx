@@ -12,7 +12,7 @@ const PageEstrategia: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
   return (
     <>
       {/* Page 3 - Estratégia intro + Movimento 1 */}
-      <div className="proposal-page geometric-bg">
+      <div data-proposal-page>
         <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
           <div className="flex gap-8">
             <div className="flex-1">
@@ -80,8 +80,8 @@ const PageEstrategia: React.FC<Props> = ({ data, onChange, textSizeClass }) => {
       </div>
 
       {/* Page 4 - Movimento 1 cont + Resultado */}
+      <div data-proposal-page>
       <div className="proposal-page geometric-bg">
-        <div className="px-[6%] py-[4%] relative z-10 h-full flex flex-col">
           <div className="flex-1">
             <div className="ml-4 mb-6">
               <span className="font-semibold text-proposal-dark">3.</span>
