@@ -227,7 +227,7 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
               </h4>
               <Field label={`Tamanho: ${data.logoSize}px`}>
                 <input
-                  type="range" min={40} max={200} value={data.logoSize}
+                  type="range" min={80} max={300} value={data.logoSize}
                   onChange={(e) => onChange({ logoSize: Number(e.target.value) })}
                   className="w-full h-1" style={{ accentColor: '#c9a84c' }}
                 />
@@ -248,6 +248,23 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
                       {pos === "top" ? "Topo" : pos === "center" ? "Centro" : "Base"}
                     </button>
                   ))}
+                </div>
+              </Field>
+            </div>
+            <div style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-3">
+              <h4 style={{ fontSize: 10, fontWeight: 700, color: 'rgba(201,168,76,0.8)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Image size={10} /> FOTO DA CAPA
+              </h4>
+              <Field label={`Posição vertical: ${data.coverPhotoPosition}%`}>
+                <input
+                  type="range" min={0} max={100} value={data.coverPhotoPosition}
+                  onChange={(e) => onChange({ coverPhotoPosition: Number(e.target.value) })}
+                  className="w-full h-1" style={{ accentColor: '#c9a84c' }}
+                />
+                <div className="flex justify-between" style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', fontFamily: "'Lato', sans-serif" }}>
+                  <span>Topo (rosto)</span>
+                  <span>Centro</span>
+                  <span>Base</span>
                 </div>
               </Field>
             </div>

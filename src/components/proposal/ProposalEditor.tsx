@@ -29,16 +29,16 @@ const ProposalEditor: React.FC = () => {
   const [previewScale, setPreviewScale] = useState(0.6);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
 
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Calculate preview scale based on container width
   useEffect(() => {
     const updateScale = () => {
       if (containerRef.current) {
-        const containerWidth = containerRef.current.clientWidth - 64; // padding
+        const containerWidth = containerRef.current.clientWidth - 64;
         const scale = Math.min(containerWidth / 1280, 0.85);
         setPreviewScale(Math.max(scale, 0.35));
       }
@@ -51,13 +51,38 @@ const ProposalEditor: React.FC = () => {
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
   const generatePDF = async () => {
-    if (!previewRef.current || generating) return;
+    if (generating) return;
     setGenerating(true);
 
     try {
       await document.fonts.ready;
-      const pages = previewRef.current.querySelectorAll("[data-proposal-page]");
-      if (pages.length === 0) return;
+
+      // Create a hidden container at full size (no scale) for PDF capture
+      const pdfContainer = document.createElement("div");
+      pdfContainer.style.position = "absolute";
+      pdfContainer.style.left = "-9999px";
+      pdfContainer.style.top = "0";
+      pdfContainer.style.width = "1280px";
+      pdfContainer.style.zIndex = "-1";
+      document.body.appendChild(pdfContainer);
+
+      // Clone the preview content into the hidden container
+      if (previewRef.current) {
+        const clone = previewRef.current.cloneNode(true) as HTMLElement;
+        clone.style.transform = "none";
+        clone.style.transformOrigin = "top left";
+        clone.style.width = "1280px";
+        pdfContainer.appendChild(clone);
+      }
+
+      // Wait for images to load in clone
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      const pages = pdfContainer.querySelectorAll("[data-proposal-page]");
+      if (pages.length === 0) {
+        document.body.removeChild(pdfContainer);
+        return;
+      }
 
       const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
 
@@ -75,6 +100,9 @@ const ProposalEditor: React.FC = () => {
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720);
       }
+
+      // Cleanup
+      document.body.removeChild(pdfContainer);
 
       pdf.save(`Proposta_${data.clientName.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
@@ -158,6 +186,7 @@ const ProposalEditor: React.FC = () => {
         <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 32, background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
           <div
             ref={previewRef}
+            className="preview-wrapper"
             style={{
               transformOrigin: 'top center',
               transform: `scale(${previewScale})`,

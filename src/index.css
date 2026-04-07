@@ -83,6 +83,27 @@
     position: relative;
   }
 
+  /* Fix overlapping text — reset letter/word spacing globally */
+  .slide * {
+    letter-spacing: normal;
+    word-spacing: normal;
+    word-break: normal;
+  }
+
+  .slide p {
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  /* Explicit spacing overrides for elements that need them */
+  .slide .gold-badge {
+    letter-spacing: 0.15em;
+  }
+
+  .slide h1, .slide h2, .slide h3 {
+    letter-spacing: normal;
+  }
+
   .slide-dark {
     background-color: #0d2b45;
     color: #ffffff;
