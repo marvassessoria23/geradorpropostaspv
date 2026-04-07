@@ -68,6 +68,9 @@ export interface ProposalData {
   logoSize: number;
   logoPosition: "top" | "center" | "bottom";
 
+  // Cover photo vertical position (0-100, default 15)
+  coverPhotoPosition: number;
+
   // Theme
   corFundo: string;
   corDestaque: string;
@@ -169,8 +172,9 @@ export const defaultProposalData: ProposalData = {
   fotoProximosPassos: null,
   fotoContato: null,
 
-  logoSize: 120,
+  logoSize: 140,
   logoPosition: "bottom",
+  coverPhotoPosition: 15,
 
   corFundo: "#0d2b45",
   corDestaque: "#c9a84c",

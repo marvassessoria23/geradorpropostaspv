@@ -9,7 +9,9 @@ interface Props {
 
 const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
   const logo = data.logoImage || logoImg;
-  const logoW = data.logoSize || 120;
+  const logoW = data.logoSize || 140;
+  const hasCustomLogo = !!data.logoImage;
+  const coverPhotoPosition = data.coverPhotoPosition ?? 15;
 
   return (
     <div className="slide slide-dark geometric-dark" style={{ display: 'flex', padding: 0 }}>
@@ -31,10 +33,10 @@ const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
           </h2>
         </div>
 
-        {/* Logo at bottom */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto' }} />
-          <div>
+        {/* Logo at bottom — show only image when custom logo uploaded */}
+        <div>
+          {/* Office name and subtitle ABOVE logo */}
+          <div style={{ marginBottom: 12 }}>
             <p style={{ fontFamily: "'Playfair Display', serif", color: '#ffffff', fontSize: 18, letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}>
               {data.nomeEscritorio}
             </p>
@@ -42,6 +44,7 @@ const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
               {data.subtituloEscritorio}
             </p>
           </div>
+          <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto', objectFit: 'contain' }} />
         </div>
       </div>
 
@@ -49,7 +52,18 @@ const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
       <div style={{ width: '42%', position: 'relative', overflow: 'hidden' }}>
         {data.coverImage ? (
           <>
-            <img src={data.coverImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            <img
+              src={data.coverImage}
+              alt=""
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: `center ${coverPhotoPosition}%`,
+              }}
+            />
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0d2b45 0%, rgba(13,43,69,0.6) 30%, transparent 100%)' }} />
           </>
         ) : (
