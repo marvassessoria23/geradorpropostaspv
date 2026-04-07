@@ -68,7 +68,6 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
-  // Compute page numbers automatically
   const visiblePages = data.pages.filter((p) => p.visible);
   let globalPageCounter = 0;
 
@@ -97,29 +96,31 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
-  // Estrategia renders 4 sub-pages
-  const getPageSlotCount = (type: PageType) => (type === "estrategia" ? 4 : 1);
-
   return (
-    <div className="h-screen flex flex-col bg-proposal-dark">
+    <div className="h-screen flex flex-col bg-[#0d1b2a]">
       {/* Header */}
-      <header className="flex-shrink-0 border-b border-proposal-gold/20 px-4 py-2.5 flex items-center justify-between bg-proposal-dark z-50">
-        <div className="flex items-center gap-3">
+      <header className="flex-shrink-0 border-b border-proposal-gold/15 px-5 py-2.5 flex items-center justify-between bg-proposal-dark/95 backdrop-blur-sm z-50">
+        <div className="flex items-center gap-4">
           <button
             onClick={() => setPanelOpen(!panelOpen)}
-            className="p-2 rounded-lg border border-proposal-gold/30 text-proposal-gold hover:bg-proposal-gold/10 transition-colors"
+            className="p-2 rounded-lg border border-proposal-gold/20 text-proposal-gold hover:bg-proposal-gold/10 transition-all hover:border-proposal-gold/40"
           >
             {panelOpen ? <PanelLeftClose size={16} /> : <PanelLeft size={16} />}
           </button>
-          <img src={logoImg} alt="Paiva Nunes" className="w-7 h-7 object-contain" />
-          <h1 className="font-display text-proposal-text-light text-base tracking-wider">
-            Gerador de Propostas
-          </h1>
+          <div className="flex items-center gap-3">
+            <img src={logoImg} alt="Paiva Nunes" className="w-8 h-8 object-contain" />
+            <div>
+              <h1 className="font-display text-proposal-text-light text-sm tracking-wider leading-none">
+                Gerador de Propostas
+              </h1>
+              <span className="text-proposal-gold/60 text-[10px] font-body tracking-widest uppercase">Paiva Nunes Advogados</span>
+            </div>
+          </div>
         </div>
         <button
           onClick={generatePDF}
           disabled={generating}
-          className="flex items-center gap-2 px-5 py-2 rounded-lg bg-proposal-gold text-proposal-dark font-body font-semibold text-sm hover:brightness-110 transition-all disabled:opacity-50"
+          className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-gradient-to-r from-proposal-gold to-proposal-gold-light text-proposal-dark font-body font-bold text-sm hover:brightness-110 transition-all disabled:opacity-50 shadow-lg shadow-proposal-gold/20"
         >
           <FileDown size={16} />
           {generating ? "Gerando..." : "Gerar PDF"}
@@ -130,37 +131,35 @@ const ProposalEditor: React.FC = () => {
       <div className="flex-1 flex min-h-0">
         {/* Editor Panel */}
         {panelOpen && (
-          <div className="w-[380px] flex-shrink-0 border-r border-proposal-gold/20 overflow-hidden">
+          <div className="w-[400px] flex-shrink-0 border-r border-proposal-gold/10 overflow-hidden bg-[#0f1f33]">
             <EditorPanel data={data} onChange={updateData} />
           </div>
         )}
 
         {/* Preview */}
-        <div className="flex-1 overflow-y-auto bg-proposal-dark/50 p-6">
+        <div className="flex-1 overflow-y-auto p-8" style={{ background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
           <div
             ref={previewRef}
-            className={`max-w-5xl mx-auto ${data.viewMode === "pages" ? "space-y-6" : "space-y-0"}`}
+            className={`max-w-5xl mx-auto ${data.viewMode === "pages" ? "space-y-8" : "space-y-0"}`}
           >
             {visiblePages.map((page) => {
               globalPageCounter++;
               const currentPageNum = globalPageCounter;
 
-              // Estrategia takes 4 slots
               if (page.type === "estrategia") {
                 globalPageCounter += 3;
               }
 
-              // Wrap non-estrategia in data-proposal-page
               if (page.type === "estrategia") {
                 return (
-                  <div key={page.id}>
+                  <div key={page.id} className={data.viewMode === "pages" ? "space-y-8" : ""}>
                     {renderPage(page.type, currentPageNum)}
                   </div>
                 );
               }
 
               return (
-                <div key={page.id} data-proposal-page>
+                <div key={page.id} data-proposal-page className={data.viewMode === "pages" ? "proposal-page-shadow" : ""}>
                   {renderPage(page.type, currentPageNum)}
                 </div>
               );
