@@ -193,9 +193,7 @@ const ProposalEditor: React.FC = () => {
             </div>
           )}
           {data.visibleSections.estrategia && (
-            <div data-proposal-page>
-              <PageEstrategia data={data} onChange={updateData} textSizeClass={textSizeClass} />
-            </div>
+            <PageEstrategia data={data} onChange={updateData} textSizeClass={textSizeClass} />
           )}
           {data.visibleSections.argumentos && (
             <div data-proposal-page>
