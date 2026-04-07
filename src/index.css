@@ -2,94 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 40 33% 95%;
+    --foreground: 200 40% 16%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 40 33% 95%;
+    --card-foreground: 200 40% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 200 40% 16%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 200 55% 18%;
+    --primary-foreground: 40 33% 95%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 40 33% 92%;
+    --secondary-foreground: 200 40% 16%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 40 20% 90%;
+    --muted-foreground: 200 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 42 65% 55%;
+    --accent-foreground: 200 55% 18%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 40 20% 85%;
+    --input: 40 20% 85%;
+    --ring: 42 65% 55%;
 
     --radius: 0.5rem;
 
+    --proposal-dark: 200 55% 18%;
+    --proposal-cream: 40 33% 95%;
+    --proposal-gold: 42 65% 55%;
+    --proposal-gold-light: 42 65% 70%;
+    --proposal-text-dark: 200 40% 16%;
+    --proposal-text-light: 40 33% 95%;
+
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
@@ -100,6 +60,79 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .font-body {
+    font-family: 'Inter', sans-serif;
+  }
+
+  .proposal-page {
+    @apply w-full bg-proposal-cream relative overflow-hidden;
+    aspect-ratio: 16 / 9;
+  }
+
+  .proposal-page-dark {
+    @apply w-full bg-proposal-dark relative overflow-hidden;
+    aspect-ratio: 16 / 9;
+  }
+
+  .proposal-section-title {
+    @apply font-display text-proposal-dark font-bold tracking-wide;
+  }
+
+  .proposal-section-title-light {
+    @apply font-display text-proposal-gold font-bold tracking-wide;
+  }
+
+  .proposal-gold-line {
+    @apply bg-proposal-gold;
+    height: 3px;
+  }
+
+  .proposal-gold-bar {
+    @apply bg-proposal-gold px-6 py-2;
+  }
+
+  .editable-field {
+    @apply outline-none border-b border-transparent transition-colors duration-200 cursor-text;
+  }
+
+  .editable-field:hover {
+    @apply border-proposal-gold/40;
+  }
+
+  .editable-field:focus {
+    @apply border-proposal-gold bg-proposal-gold/5;
+  }
+
+  .geometric-bg::before {
+    content: '';
+    @apply absolute inset-0 opacity-10 pointer-events-none;
+    background-image: url("data:image/svg+xml,%3Csvg width='400' height='400' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M200 50 L350 200 L200 350 L50 200 Z' fill='none' stroke='%23c9a84c' stroke-width='1'/%3E%3Cpath d='M200 100 L300 200 L200 300 L100 200 Z' fill='none' stroke='%23c9a84c' stroke-width='1'/%3E%3Cpath d='M150 50 L350 150 L250 350 L50 250 Z' fill='none' stroke='%23c9a84c' stroke-width='0.5'/%3E%3C/svg%3E");
+    background-size: 300px;
+    background-position: center;
+  }
+
+  .page-number {
+    @apply absolute bottom-4 left-6 w-8 h-8 rounded-full bg-proposal-gold flex items-center justify-center text-proposal-dark font-bold text-sm;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .proposal-page,
+  .proposal-page-dark {
+    page-break-after: always;
+    page-break-inside: avoid;
   }
 }
