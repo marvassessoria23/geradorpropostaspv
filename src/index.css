@@ -2,46 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap');
 
 @layer base {
   :root {
     --background: 40 33% 95%;
-    --foreground: 200 40% 16%;
+    --foreground: 207 51% 23%;
 
     --card: 40 33% 95%;
-    --card-foreground: 200 40% 16%;
+    --card-foreground: 207 51% 23%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 200 40% 16%;
+    --popover-foreground: 207 51% 23%;
 
-    --primary: 200 55% 18%;
+    --primary: 207 65% 16%;
     --primary-foreground: 40 33% 95%;
 
     --secondary: 40 33% 92%;
-    --secondary-foreground: 200 40% 16%;
+    --secondary-foreground: 207 51% 23%;
 
     --muted: 40 20% 90%;
-    --muted-foreground: 200 10% 45%;
+    --muted-foreground: 207 10% 45%;
 
-    --accent: 42 65% 55%;
-    --accent-foreground: 200 55% 18%;
+    --accent: 42 52% 54%;
+    --accent-foreground: 207 65% 16%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 40 20% 85%;
     --input: 40 20% 85%;
-    --ring: 42 65% 55%;
+    --ring: 42 52% 54%;
 
     --radius: 0.5rem;
 
-    --proposal-dark: 200 55% 18%;
-    --proposal-cream: 40 33% 95%;
-    --proposal-gold: 42 65% 55%;
-    --proposal-gold-light: 42 65% 70%;
-    --proposal-text-dark: 200 40% 16%;
-    --proposal-text-light: 40 33% 95%;
+    /* Proposal design tokens — exact from original */
+    --proposal-dark: 207 65% 16%;
+    --proposal-cream: 36 43% 93%;
+    --proposal-gold: 42 52% 54%;
+    --proposal-gold-light: 42 52% 66%;
+    --proposal-text-dark: 207 51% 23%;
+    --proposal-text-light: 0 0% 100%;
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -70,84 +71,136 @@
   }
 
   .font-body {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Lato', sans-serif;
   }
 
-  .font-elegant {
-    font-family: 'Cormorant Garamond', serif;
+  /* Slide base: fixed 1280x720 reference */
+  .slide {
+    width: 1280px;
+    min-height: 720px;
+    overflow: visible;
+    box-sizing: border-box;
+    position: relative;
   }
 
-  .proposal-page {
-    @apply w-full bg-proposal-cream relative overflow-hidden;
-    aspect-ratio: 16 / 9;
+  .slide-dark {
+    background-color: #0d2b45;
+    color: #ffffff;
   }
 
-  .proposal-page-dark {
-    @apply w-full bg-proposal-dark relative overflow-hidden;
-    aspect-ratio: 16 / 9;
+  .slide-light {
+    background-color: #f5f0e8;
+    color: #1a3a5c;
   }
 
-  .proposal-section-title {
-    @apply font-display text-proposal-dark font-bold tracking-wide;
+  .slide-gold {
+    background-color: #e8c96a;
+    color: #1a3a5c;
   }
 
-  .proposal-section-title-light {
-    @apply font-display text-proposal-gold font-bold tracking-wide;
-  }
-
-  .proposal-gold-line {
-    @apply bg-proposal-gold;
-    height: 3px;
-  }
-
-  .proposal-gold-bar {
-    @apply bg-proposal-gold px-6 py-2;
-  }
-
-  .editable-field {
-    @apply outline-none border-b border-transparent transition-colors duration-200 cursor-text;
-  }
-
-  .editable-field:hover {
-    @apply border-proposal-gold/40;
-  }
-
-  .editable-field:focus {
-    @apply border-proposal-gold bg-proposal-gold/5;
-  }
-
-  .geometric-bg::before {
+  /* Geometric decorations for dark slides */
+  .geometric-dark::before {
     content: '';
-    @apply absolute inset-0 opacity-[0.06] pointer-events-none;
-    background-image: url("data:image/svg+xml,%3Csvg width='600' height='600' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M300 60 L540 300 L300 540 L60 300 Z' fill='none' stroke='%23c9a84c' stroke-width='0.8'/%3E%3Cpath d='M300 120 L480 300 L300 480 L120 300 Z' fill='none' stroke='%23c9a84c' stroke-width='0.6'/%3E%3Cpath d='M300 180 L420 300 L300 420 L180 300 Z' fill='none' stroke='%23c9a84c' stroke-width='0.4'/%3E%3Ccircle cx='300' cy='300' r='200' fill='none' stroke='%23c9a84c' stroke-width='0.3'/%3E%3Ccircle cx='300' cy='300' r='260' fill='none' stroke='%23c9a84c' stroke-width='0.2'/%3E%3C/svg%3E");
+    position: absolute;
+    top: -40px;
+    right: -40px;
+    width: 350px;
+    height: 350px;
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .geometric-dark::after {
+    content: '';
+    position: absolute;
+    top: 60px;
+    right: 80px;
+    width: 200px;
+    height: 200px;
+    border: 1px solid rgba(201,168,76,0.08);
+    transform: rotate(45deg);
+    pointer-events: none;
+  }
+
+  /* Watermark for light slides */
+  .watermark-light::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='600' height='600' viewBox='0 0 600 600' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M300 60 L540 300 L300 540 L60 300 Z' fill='none' stroke='%231a3a5c' stroke-width='0.8'/%3E%3Cpath d='M300 120 L480 300 L300 480 L120 300 Z' fill='none' stroke='%231a3a5c' stroke-width='0.6'/%3E%3Ccircle cx='300' cy='300' r='200' fill='none' stroke='%231a3a5c' stroke-width='0.3'/%3E%3C/svg%3E");
     background-size: 500px;
     background-position: center;
   }
 
-  .page-number {
-    @apply absolute bottom-4 left-6 w-8 h-8 rounded-full bg-proposal-gold flex items-center justify-center text-proposal-dark font-bold text-sm;
-    box-shadow: 0 2px 8px hsl(42 65% 55% / 0.3);
+  /* Gold section badge */
+  .gold-badge {
+    display: inline-block;
+    background-color: #c9a84c;
+    color: #0d2b45;
+    padding: 6px 20px;
+    font-family: 'Lato', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
   }
 
-  /* Premium shadow for preview pages */
-  .proposal-page-shadow {
+  /* Gold decorative line */
+  .gold-line {
+    height: 2px;
+    background-color: #c9a84c;
+  }
+
+  /* Gold vertical bar accent */
+  .gold-bar-vertical {
+    width: 4px;
+    background-color: #c9a84c;
+    border-radius: 2px;
+  }
+
+  /* Page number circle */
+  .page-num {
+    position: absolute;
+    bottom: 24px;
+    left: 32px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #c9a84c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 13px;
+    font-family: 'Lato', sans-serif;
+    box-shadow: 0 2px 8px rgba(201,168,76,0.3);
+  }
+
+  /* Premium shadow for preview */
+  .slide-shadow {
     box-shadow:
-      0 4px 24px -4px rgba(0, 0, 0, 0.25),
-      0 0 0 1px rgba(201, 168, 76, 0.08);
+      0 8px 32px -8px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(201, 168, 76, 0.06);
     border-radius: 4px;
     overflow: hidden;
   }
 
   /* Upload area styling */
   .upload-zone {
-    @apply border-2 border-dashed border-proposal-gold/25 rounded-lg flex items-center justify-center cursor-pointer transition-all;
+    @apply border-2 border-dashed rounded-lg flex items-center justify-center cursor-pointer transition-all;
+    border-color: rgba(201,168,76,0.25);
   }
 
   .upload-zone:hover {
-    @apply border-proposal-gold/50 bg-proposal-gold/5;
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.05);
   }
 
-  /* Scrollbar for editor panel */
+  /* Editor scrollbar */
   .editor-scrollbar::-webkit-scrollbar {
     width: 5px;
   }
@@ -157,12 +210,12 @@
   }
 
   .editor-scrollbar::-webkit-scrollbar-thumb {
-    background: hsl(42 65% 55% / 0.2);
+    background: rgba(201,168,76,0.2);
     border-radius: 10px;
   }
 
   .editor-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: hsl(42 65% 55% / 0.4);
+    background: rgba(201,168,76,0.4);
   }
 }
 
@@ -170,9 +223,8 @@
   .no-print {
     display: none !important;
   }
-  
-  .proposal-page,
-  .proposal-page-dark {
+
+  .slide {
     page-break-after: always;
     page-break-inside: avoid;
   }

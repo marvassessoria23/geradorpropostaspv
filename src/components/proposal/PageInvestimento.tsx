@@ -9,77 +9,70 @@ interface Props {
 }
 
 const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+  const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
+
   return (
-    <div className="proposal-page-dark geometric-bg">
-      <div className="px-[6%] py-[4.5%] relative z-10 h-full flex flex-col">
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-1 h-10 bg-proposal-gold rounded-full" />
-          <h2 className="font-display text-proposal-gold text-2xl md:text-3xl font-bold uppercase tracking-wider">
-            Investimento
-          </h2>
-          <div className="flex-1 h-px bg-proposal-gold/20" />
-        </div>
-
-        <div className="flex-1 flex flex-col md:flex-row gap-6">
-          {/* Honorários Antecipados */}
-          <div className="flex-1 border border-proposal-text-light/15 rounded-xl overflow-hidden">
-            <div className="bg-proposal-gold/10 border-b border-proposal-text-light/10 px-5 py-3 text-center">
-              <h3 className="text-proposal-text-light font-body font-bold text-sm">
-                Honorários Mínimos Antecipados
-              </h3>
-            </div>
-            <div className="p-5">
-              <div className="flex justify-center mb-5">
-                <div className="w-16 h-16 rounded-full bg-proposal-gold/10 flex items-center justify-center">
-                  <CreditCard size={28} className="text-proposal-gold/70" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <div className="text-center">
-                  <span className="text-proposal-gold font-display font-bold text-2xl">{data.honorarioAntecipado1}</span>
-                  <p className={`${textSizeClass} text-proposal-text-light/70 font-body mt-1`}>{data.honorarioAntecipado1Desc}</p>
-                </div>
-                <div className="h-px bg-proposal-text-light/10" />
-                <div className="text-center">
-                  <span className="text-proposal-gold font-display font-bold text-2xl">{data.honorarioAntecipado2}</span>
-                  <p className={`${textSizeClass} text-proposal-text-light/70 font-body mt-1`}>{data.honorarioAntecipado2Desc}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Honorários de Êxito */}
-          <div className="flex-1 border border-proposal-text-light/15 rounded-xl overflow-hidden">
-            <div className="bg-proposal-gold/10 border-b border-proposal-text-light/10 px-5 py-3 text-center">
-              <h3 className="text-proposal-text-light font-body font-bold text-sm">
-                Honorários de Êxito
-              </h3>
-            </div>
-            <div className="p-5">
-              <div className="flex justify-center mb-5">
-                <div className="w-16 h-16 rounded-full bg-proposal-gold/10 flex items-center justify-center">
-                  <DollarSign size={28} className="text-proposal-gold/70" />
-                </div>
-              </div>
-              <div className="space-y-4">
-                <p className={`${textSizeClass} text-proposal-text-light/70 font-body whitespace-pre-wrap text-center`}>{data.honorarioExito1}</p>
-                <div className="h-px bg-proposal-text-light/10" />
-                <p className={`${textSizeClass} text-proposal-text-light/70 font-body whitespace-pre-wrap text-center`}>{data.honorarioExito2}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 text-center space-y-3">
-          <p className="text-proposal-text-light font-body font-semibold">{data.parcelamento}</p>
-          <div className="proposal-gold-line w-full" />
-          <div className="bg-proposal-cream/5 border border-proposal-text-light/10 rounded-lg p-4">
-            <p className={`${textSizeClass} text-proposal-text-light/80 font-body whitespace-pre-wrap`}>{data.validadeProposta}</p>
-          </div>
-        </div>
-
-        <div className="page-number">{pageNumber}</div>
+    <div className="slide slide-dark geometric-dark" style={{ padding: '48px 64px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
+        <div className="gold-bar-vertical" style={{ height: 40 }} />
+        <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+          Investimento
+        </h2>
+        <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.2)' }} />
       </div>
+
+      <div style={{ display: 'flex', gap: 24, marginBottom: 32 }}>
+        {/* Honorários Antecipados */}
+        <div style={{ flex: 1, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(201,168,76,0.1)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px', textAlign: 'center' }}>
+            <h3 style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 700, fontSize: 14, margin: 0 }}>
+              Honorários Mínimos Antecipados
+            </h3>
+          </div>
+          <div style={{ padding: 24, textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <CreditCard size={24} color="rgba(201,168,76,0.7)" />
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28 }}>{data.honorarioAntecipado1}</span>
+              <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4 }}>{data.honorarioAntecipado1Desc}</p>
+            </div>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
+            <div>
+              <span style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28 }}>{data.honorarioAntecipado2}</span>
+              <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4 }}>{data.honorarioAntecipado2Desc}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Honorários de Êxito */}
+        <div style={{ flex: 1, border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, overflow: 'hidden' }}>
+          <div style={{ background: 'rgba(201,168,76,0.1)', borderBottom: '1px solid rgba(255,255,255,0.08)', padding: '12px 20px', textAlign: 'center' }}>
+            <h3 style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 700, fontSize: 14, margin: 0 }}>
+              Honorários de Êxito
+            </h3>
+          </div>
+          <div style={{ padding: 24, textAlign: 'center' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <DollarSign size={24} color="rgba(201,168,76,0.7)" />
+            </div>
+            <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{data.honorarioExito1}</p>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
+            <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{data.honorarioExito2}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ textAlign: 'center' }}>
+        <p style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 600, fontSize: 14, marginBottom: 12 }}>{data.parcelamento}</p>
+        <div className="gold-line" style={{ width: '100%', marginBottom: 12 }} />
+        <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 16 }}>
+          <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.7)', fontSize: sz, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{data.validadeProposta}</p>
+        </div>
+      </div>
+
+      <div className="page-num">{pageNumber}</div>
     </div>
   );
 };

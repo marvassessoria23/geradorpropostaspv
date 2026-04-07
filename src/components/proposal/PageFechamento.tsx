@@ -8,46 +8,49 @@ interface Props {
 }
 
 const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+  const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
+  const hasImage = !!data.fotoProximosPassos;
+
   return (
-    <div className="proposal-page-dark geometric-bg flex">
+    <div className="slide slide-dark geometric-dark" style={{ display: 'flex', padding: 0 }}>
       {/* Content */}
-      <div className={`${data.fechamentoImage ? 'flex-1' : 'w-full'} px-[6%] py-[5%] relative z-10 flex flex-col`}>
-        <div className="flex items-center gap-3 mb-10">
-          <div className="w-1 h-10 bg-proposal-gold rounded-full" />
-          <h2 className="font-display text-proposal-gold text-2xl md:text-3xl font-bold uppercase tracking-wider">
+      <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', zIndex: 10, position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
+          <div className="gold-bar-vertical" style={{ height: 40 }} />
+          <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
             Próximos Passos
           </h2>
-          <div className="flex-1 h-px bg-proposal-gold/15 ml-4" />
+          <div style={{ flex: 1, height: 1, background: 'rgba(201,168,76,0.15)', marginLeft: 16 }} />
         </div>
 
-        <div className="flex-1">
-          <div className="relative pl-10">
-            <div className="absolute left-3 top-2 bottom-2 w-px bg-gradient-to-b from-proposal-gold/60 via-proposal-gold/30 to-transparent" />
+        <div style={{ flex: 1 }}>
+          <div style={{ position: 'relative', paddingLeft: 40 }}>
+            <div style={{ position: 'absolute', left: 12, top: 8, bottom: 8, width: 1, background: 'linear-gradient(to bottom, rgba(201,168,76,0.6), rgba(201,168,76,0.15), transparent)' }} />
             {data.fechamentoSteps.map((step, i) => (
-              <div key={i} className="relative mb-8 last:mb-4">
-                <div className="absolute left-[-26px] top-0.5 w-5 h-5 rounded-full bg-proposal-gold flex items-center justify-center shadow-md">
-                  <span className="text-proposal-dark text-[9px] font-bold">{i + 1}</span>
+              <div key={i} style={{ position: 'relative', marginBottom: 32 }}>
+                <div style={{ position: 'absolute', left: -34, top: 2, width: 22, height: 22, borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(201,168,76,0.3)' }}>
+                  <span style={{ color: '#0d2b45', fontSize: 10, fontWeight: 700 }}>{i + 1}</span>
                 </div>
-                <p className={`${textSizeClass} text-proposal-text-light font-body leading-relaxed`}>{step}</p>
+                <p style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontSize: sz, lineHeight: 1.6 }}>{step}</p>
               </div>
             ))}
           </div>
 
-          <div className="mt-10 border-t border-proposal-gold/20 pt-6">
-            <p className="text-proposal-gold font-display text-lg md:text-xl leading-relaxed italic whitespace-pre-wrap">
+          <div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', paddingTop: 24, marginTop: 16 }}>
+            <p style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
               {data.fechamentoCTA}
             </p>
           </div>
         </div>
 
-        <div className="page-number">{pageNumber}</div>
+        <div className="page-num">{pageNumber}</div>
       </div>
 
       {/* Optional side image */}
-      {data.fechamentoImage && (
-        <div className="hidden md:block w-[35%] relative">
-          <img src={data.fechamentoImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-proposal-dark via-proposal-dark/50 to-transparent" />
+      {hasImage && (
+        <div style={{ width: '35%', position: 'relative', overflow: 'hidden' }}>
+          <img src={data.fotoProximosPassos!} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0d2b45 0%, rgba(13,43,69,0.5) 30%, transparent 100%)' }} />
         </div>
       )}
     </div>

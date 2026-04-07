@@ -8,32 +8,44 @@ interface Props {
 }
 
 const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+  const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
+
   return (
-    <div className="proposal-page geometric-bg">
-      <div className="px-[6%] py-[4.5%] relative z-10 h-full flex flex-col">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-1 h-10 bg-proposal-gold rounded-full" />
-          <h2 className="font-display text-proposal-dark text-2xl md:text-3xl font-bold uppercase tracking-wider">
-            Sobre a Paiva Nunes
+    <div className="slide slide-light watermark-light" style={{ padding: '48px 64px', display: 'flex' }}>
+      {/* Content */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+          <div className="gold-bar-vertical" style={{ height: 48 }} />
+          <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
+            {data.sobreTitle}
           </h2>
-          <div className="flex-1 h-px bg-proposal-dark/10 ml-4" />
+          <div style={{ flex: 1, height: 1, background: 'rgba(26,58,92,0.1)', marginLeft: 16 }} />
         </div>
 
-        <div className="flex-1 space-y-4">
-          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText1}</p>
-          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText2}</p>
-          <p className={`${textSizeClass} text-proposal-text-dark font-body leading-relaxed text-justify whitespace-pre-wrap`}>{data.sobreText3}</p>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {[data.sobreText1, data.sobreText2, data.sobreText3].map((text, i) => (
+            <p key={i} style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, lineHeight: 1.7, textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}>
+              {text}
+            </p>
+          ))}
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <div className="border-2 border-proposal-gold rounded-full px-8 py-3 bg-proposal-dark flex items-center gap-3 shadow-lg">
-            <span className="text-proposal-gold text-base">👆</span>
-            <span className="text-proposal-text-light font-body font-medium text-sm tracking-wide">Conheça nossas redes sociais</span>
+        <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ border: '2px solid #c9a84c', borderRadius: 999, padding: '10px 32px', background: '#0d2b45', display: 'flex', alignItems: 'center', gap: 12, boxShadow: '0 4px 16px rgba(13,43,69,0.3)' }}>
+            <span style={{ color: '#c9a84c', fontSize: 16 }}>👆</span>
+            <span style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 500, fontSize: 14, letterSpacing: '0.05em' }}>Conheça nossas redes sociais</span>
           </div>
         </div>
-
-        <div className="page-number">{pageNumber}</div>
       </div>
+
+      {/* Optional side image */}
+      {data.fotoSobre && (
+        <div style={{ width: '35%', marginLeft: 32, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
+          <img src={data.fotoSobre} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
+
+      <div className="page-num">{pageNumber}</div>
     </div>
   );
 };

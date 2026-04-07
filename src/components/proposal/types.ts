@@ -13,6 +13,13 @@ export interface ArgumentRow {
   observacao: string;
 }
 
+export interface Avaliacao {
+  id: string;
+  nome: string;
+  nota: number;
+  texto: string;
+}
+
 export type PageType =
   | "cover"
   | "diagnostico"
@@ -20,6 +27,7 @@ export type PageType =
   | "argumentos"
   | "sobre"
   | "equipe"
+  | "avaliacoes"
   | "investimento"
   | "fechamento"
   | "contato";
@@ -32,11 +40,12 @@ export interface ProposalPage {
 
 export const PAGE_TYPE_LABELS: Record<PageType, string> = {
   cover: "Capa",
-  diagnostico: "Diagnóstico",
-  estrategia: "Estratégia Jurídica",
-  argumentos: "Argumentos",
+  diagnostico: "Contexto da Demanda",
+  estrategia: "Proposta de Atuação",
+  argumentos: "Síntese dos Argumentos",
   sobre: "Sobre o Escritório",
   equipe: "Equipe",
+  avaliacoes: "Avaliações Google",
   investimento: "Investimento",
   fechamento: "Próximos Passos",
   contato: "Contato",
@@ -44,22 +53,24 @@ export const PAGE_TYPE_LABELS: Record<PageType, string> = {
 
 export interface ProposalData {
   clientName: string;
-  coverSubtitle: string;
+  nomeEscritorio: string;
+  subtituloEscritorio: string;
 
   // Images
   coverImage: string | null;
+  logoImage: string | null;
   advogadoPhoto: string | null;
-  fechamentoImage: string | null;
-  contatoImage: string | null;
+  fotoSobre: string | null;
+  fotoProximosPassos: string | null;
+  fotoContato: string | null;
 
   // Logo
-  logoSize: number; // 40-200 px
+  logoSize: number;
   logoPosition: "top" | "center" | "bottom";
 
   // Theme
-  themeDarkColor: string;
-  themeGoldColor: string;
-  themeMode: "dark" | "light";
+  corFundo: string;
+  corDestaque: string;
 
   // Page 2 - Diagnóstico
   diagnosticoTitle: string;
@@ -97,6 +108,11 @@ export interface ProposalData {
   // Page 9 - Equipe
   team: TeamMember[];
 
+  // Avaliações
+  notaGoogle: number;
+  totalAvaliacoes: number;
+  avaliacoes: Avaliacao[];
+
   // Page 11 - Investimento
   honorarioAntecipado1: string;
   honorarioAntecipado1Desc: string;
@@ -115,6 +131,9 @@ export interface ProposalData {
   telefone: string;
   instagram1: string;
   instagram2: string;
+  youtube: string;
+  linkedin: string;
+  tiktok: string;
   website: string;
   contatoTexto: string;
   contatoSlogan: string;
@@ -132,26 +151,29 @@ export const defaultPages: ProposalPage[] = [
   { id: "p4", type: "argumentos", visible: true },
   { id: "p5", type: "sobre", visible: true },
   { id: "p6", type: "equipe", visible: true },
-  { id: "p7", type: "investimento", visible: true },
-  { id: "p8", type: "fechamento", visible: true },
-  { id: "p9", type: "contato", visible: true },
+  { id: "p7", type: "avaliacoes", visible: true },
+  { id: "p8", type: "investimento", visible: true },
+  { id: "p9", type: "fechamento", visible: true },
+  { id: "p10", type: "contato", visible: true },
 ];
 
 export const defaultProposalData: ProposalData = {
   clientName: "Luciano Moraes Bernardes",
-  coverSubtitle: "PAIVA NUNES\nDireito Imobiliário",
+  nomeEscritorio: "PAIVA NUNES",
+  subtituloEscritorio: "Direito Imobiliário",
 
   coverImage: null,
+  logoImage: null,
   advogadoPhoto: null,
-  fechamentoImage: null,
-  contatoImage: null,
+  fotoSobre: null,
+  fotoProximosPassos: null,
+  fotoContato: null,
 
-  logoSize: 80,
+  logoSize: 120,
   logoPosition: "bottom",
 
-  themeDarkColor: "#1a3a5c",
-  themeGoldColor: "#c9a84c",
-  themeMode: "dark",
+  corFundo: "#0d2b45",
+  corDestaque: "#c9a84c",
 
   diagnosticoTitle: "1. APRESENTAÇÃO E DIAGNÓSTICO GERAL",
   diagnosticoGreeting: "Prezado Sr. Luciano,",
@@ -227,6 +249,15 @@ export const defaultProposalData: ProposalData = {
     { id: "16", name: "Patrícia", role: "", photo: null, category: "administrativo" },
   ],
 
+  notaGoogle: 4.8,
+  totalAvaliacoes: 150,
+  avaliacoes: [
+    { id: "1", nome: "Maria Silva", nota: 5, texto: "Excelente atendimento! Profissionais muito competentes e dedicados." },
+    { id: "2", nome: "João Santos", nota: 5, texto: "Resolveram meu caso com muita agilidade e profissionalismo." },
+    { id: "3", nome: "Ana Oliveira", nota: 5, texto: "Escritório de confiança. Recomendo a todos." },
+    { id: "4", nome: "Carlos Mendes", nota: 4, texto: "Muito satisfeito com o resultado obtido no meu processo." },
+  ],
+
   honorarioAntecipado1: "R$ 4.100,00",
   honorarioAntecipado1Desc: "Notificação extrajudicial",
   honorarioAntecipado2: "R$ 8.200,00",
@@ -249,6 +280,9 @@ export const defaultProposalData: ProposalData = {
   telefone: "(51) 3331-2525",
   instagram1: "@paivanunesadv",
   instagram2: "@rafaelpaivanunes",
+  youtube: "@paivanunesadv",
+  linkedin: "paivanunesadvogados",
+  tiktok: "@paivanunesadv",
   website: "www.paivanunes.com.br/",
   contatoTexto:
     "Cada caso merece atenção individual e um olhar técnico responsável. Estamos à disposição para ouvir você, esclarecer suas dúvidas e buscar a melhor solução jurídica para a sua situação. Fale com a Paiva Nunes Advogados.",
