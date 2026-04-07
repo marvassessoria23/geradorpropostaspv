@@ -1,6 +1,6 @@
 import React from "react";
 import { ProposalData } from "./types";
-import { Phone, Instagram, Globe } from "lucide-react";
+import { Phone, Instagram, Globe, Youtube, Linkedin } from "lucide-react";
 import logoImg from "@/assets/logo-paiva-nunes.png";
 
 interface Props {
@@ -10,56 +10,68 @@ interface Props {
 }
 
 const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
-  const logoSizePx = Math.max(data.logoSize * 0.8, 48);
+  const logo = data.logoImage || logoImg;
+  const logoW = Math.max((data.logoSize || 120) * 0.8, 48);
+  const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
+
+  const contactItems = [
+    { icon: Phone, value: data.telefone },
+    { icon: Instagram, value: data.instagram1 },
+    { icon: Instagram, value: data.instagram2 },
+    ...(data.youtube ? [{ icon: Youtube, value: data.youtube }] : []),
+    ...(data.linkedin ? [{ icon: Linkedin, value: data.linkedin }] : []),
+    { icon: Globe, value: data.website },
+  ].filter(item => item.value);
 
   return (
-    <div className="proposal-page-dark geometric-bg flex">
-      {/* Optional side image */}
-      {data.contatoImage && (
-        <div className="hidden md:block w-[35%] relative">
-          <img src={data.contatoImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-l from-proposal-dark via-proposal-dark/60 to-transparent" />
+    <div className="slide slide-light watermark-light" style={{ display: 'flex', padding: 0 }}>
+      {/* Left side image */}
+      {data.fotoContato && (
+        <div style={{ width: '35%', position: 'relative', overflow: 'hidden' }}>
+          <img src={data.fotoContato} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to left, #f5f0e8 0%, rgba(245,240,232,0.5) 30%, transparent 100%)' }} />
         </div>
       )}
 
       {/* Content */}
-      <div className={`${data.contatoImage ? 'flex-1' : 'w-full'} px-[6%] py-[5%] relative z-10 flex flex-col items-center justify-center text-center`}>
-        <img src={logoImg} alt="Paiva Nunes" style={{ width: logoSizePx, height: logoSizePx }} className="object-contain mb-4" />
+      <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative' }}>
+        <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto', marginBottom: 16 }} />
 
-        <h2 className="font-display text-proposal-gold text-3xl md:text-4xl font-bold tracking-wider mb-1">
-          Paiva Nunes
+        <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>
+          {data.nomeEscritorio}
         </h2>
-        <p className="text-proposal-text-light/60 font-body tracking-widest text-sm uppercase mb-6">Direito Imobiliário</p>
+        <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.5)', letterSpacing: '0.15em', fontSize: 13, textTransform: 'uppercase', marginBottom: 24 }}>
+          {data.subtituloEscritorio}
+        </p>
 
-        <div className="proposal-gold-line w-12 mb-6" />
+        <div className="gold-line" style={{ width: 48, marginBottom: 24 }} />
 
-        <h3 className="font-display text-proposal-gold text-lg uppercase tracking-[0.3em] mb-8">Contato</h3>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, textTransform: 'uppercase', letterSpacing: '0.3em', marginBottom: 28 }}>
+          Contato
+        </h3>
 
-        <div className="space-y-3 mb-8">
-          {[
-            { icon: Phone, value: data.telefone },
-            { icon: Instagram, value: data.instagram1 },
-            { icon: Instagram, value: data.instagram2 },
-            { icon: Globe, value: data.website },
-          ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 justify-center">
-              <div className="w-7 h-7 rounded-full bg-proposal-gold/10 flex items-center justify-center">
-                <item.icon size={13} className="text-proposal-gold" />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+          {contactItems.map((item, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <item.icon size={13} color="#c9a84c" />
               </div>
-              <span className="text-proposal-text-light font-body text-sm">{item.value}</span>
+              <span style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: 14 }}>{item.value}</span>
             </div>
           ))}
         </div>
 
-        <div className="max-w-md">
-          <p className={`${textSizeClass} text-proposal-text-light/70 font-body leading-relaxed mb-6 whitespace-pre-wrap`}>
+        <div style={{ maxWidth: 400 }}>
+          <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.6)', fontSize: sz, lineHeight: 1.7, marginBottom: 20, whiteSpace: 'pre-wrap' }}>
             {data.contatoTexto}
           </p>
-          <div className="proposal-gold-line w-16 mx-auto mb-4" />
-          <p className="text-proposal-gold font-display text-lg font-bold italic">{data.contatoSlogan}</p>
+          <div className="gold-line" style={{ width: 64, margin: '0 auto 16px' }} />
+          <p style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, fontWeight: 700, fontStyle: 'italic' }}>
+            {data.contatoSlogan}
+          </p>
         </div>
 
-        <div className="page-number">{pageNumber}</div>
+        <div className="page-num">{pageNumber}</div>
       </div>
     </div>
   );
