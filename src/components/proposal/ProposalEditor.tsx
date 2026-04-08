@@ -56,46 +56,65 @@ const ProposalEditor: React.FC = () => {
     try {
       await document.fonts.ready;
 
-      const hiddenContainer = document.createElement('div');
-      hiddenContainer.style.cssText = 'position:fixed;top:0;left:-99999px;width:1280px;z-index:-1;';
-      document.body.appendChild(hiddenContainer);
+      const tempWrapper = document.createElement('div');
+      tempWrapper.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 1280px;
+        height: auto;
+        z-index: 9999;
+        pointer-events: none;
+        opacity: 0;
+      `;
+      document.body.appendChild(tempWrapper);
 
-      const slides = document.querySelectorAll('.slide');
-      slides.forEach(slide => hiddenContainer.appendChild(slide.cloneNode(true)));
-
-      hiddenContainer.querySelectorAll('.slide').forEach(el => {
-        (el as HTMLElement).style.transform = 'none';
-        (el as HTMLElement).style.transformOrigin = 'unset';
-        (el as HTMLElement).style.overflow = 'visible';
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [1280, 720],
+        compress: true,
       });
 
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720], compress: true });
-      const clonedSlides = hiddenContainer.querySelectorAll('.slide');
+      const slides = Array.from(document.querySelectorAll('.proposal-page'));
 
-      for (let i = 0; i < clonedSlides.length; i++) {
-        const canvas = await html2canvas(clonedSlides[i] as HTMLElement, {
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i] as HTMLElement;
+        const parent = slide.parentElement!;
+        const nextSibling = slide.nextSibling;
+
+        tempWrapper.appendChild(slide);
+        slide.style.transform = 'none';
+        slide.style.transformOrigin = 'unset';
+        slide.style.width = '1280px';
+        slide.style.position = 'relative';
+
+        await new Promise(r => setTimeout(r, 150));
+
+        const canvas = await html2canvas(slide, {
           scale: 2,
           useCORS: true,
-          allowTaint: false,
+          allowTaint: true,
           backgroundColor: null,
-          imageTimeout: 0,
-          width: 1280,
-          height: 720,
-          windowWidth: 1280,
-          windowHeight: 720,
-          onclone: (clonedDoc) => {
-            clonedDoc.querySelectorAll('img').forEach(img => {
-              img.crossOrigin = 'anonymous';
-            });
-          }
+          imageTimeout: 15000,
+          logging: false,
         });
 
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        if (nextSibling) {
+          parent.insertBefore(slide, nextSibling);
+        } else {
+          parent.appendChild(slide);
+        }
+        slide.style.transform = '';
+        slide.style.width = '';
+        slide.style.position = '';
+
+        const imgData = canvas.toDataURL('image/png');
         if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
+        pdf.addImage(imgData, 'PNG', 0, 0, 1280, 720);
       }
 
-      document.body.removeChild(hiddenContainer);
+      document.body.removeChild(tempWrapper);
       pdf.save(`Proposta_${data.clientName.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
