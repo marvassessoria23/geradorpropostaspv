@@ -155,6 +155,12 @@ const ProposalEditor: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col" style={{ background: '#0a1628' }}>
+      {generating && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+          <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+          <span style={{ color: '#ffffff', fontFamily: "'Lato', sans-serif", fontSize: 18, fontWeight: 600 }}>Gerando PDF, aguarde...</span>
+        </div>
+      )}
       {/* Header */}
       <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(201,168,76,0.12)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(13,43,69,0.95)', backdropFilter: 'blur(8px)', zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
