@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { ProposalData, defaultProposalData, PageType } from "./types";
+import { ProposalData, defaultProposalData, PageType, DEFAULT_BG_COLORS } from "./types";
 import EditorPanel from "./EditorPanel";
 import PageCover from "./PageCover";
 import PageDiagnostico from "./PageDiagnostico";
@@ -29,7 +29,6 @@ const ProposalEditor: React.FC = () => {
   const [previewScale, setPreviewScale] = useState(0.6);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const pdfContainerRef = useRef<HTMLDivElement>(null);
 
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
@@ -57,53 +56,46 @@ const ProposalEditor: React.FC = () => {
     try {
       await document.fonts.ready;
 
-      // Create a hidden container at full size (no scale) for PDF capture
-      const pdfContainer = document.createElement("div");
-      pdfContainer.style.position = "absolute";
-      pdfContainer.style.left = "-9999px";
-      pdfContainer.style.top = "0";
-      pdfContainer.style.width = "1280px";
-      pdfContainer.style.zIndex = "-1";
-      document.body.appendChild(pdfContainer);
+      const hiddenContainer = document.createElement('div');
+      hiddenContainer.style.cssText = 'position:fixed;top:0;left:-99999px;width:1280px;z-index:-1;';
+      document.body.appendChild(hiddenContainer);
 
-      // Clone the preview content into the hidden container
-      if (previewRef.current) {
-        const clone = previewRef.current.cloneNode(true) as HTMLElement;
-        clone.style.transform = "none";
-        clone.style.transformOrigin = "top left";
-        clone.style.width = "1280px";
-        pdfContainer.appendChild(clone);
-      }
+      const slides = document.querySelectorAll('.slide');
+      slides.forEach(slide => hiddenContainer.appendChild(slide.cloneNode(true)));
 
-      // Wait for images to load in clone
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      hiddenContainer.querySelectorAll('.slide').forEach(el => {
+        (el as HTMLElement).style.transform = 'none';
+        (el as HTMLElement).style.transformOrigin = 'unset';
+        (el as HTMLElement).style.overflow = 'visible';
+      });
 
-      const pages = pdfContainer.querySelectorAll("[data-proposal-page]");
-      if (pages.length === 0) {
-        document.body.removeChild(pdfContainer);
-        return;
-      }
+      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1280, 720], compress: true });
+      const clonedSlides = hiddenContainer.querySelectorAll('.slide');
 
-      const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [1280, 720] });
-
-      for (let i = 0; i < pages.length; i++) {
-        const page = pages[i] as HTMLElement;
-        const canvas = await html2canvas(page, {
+      for (let i = 0; i < clonedSlides.length; i++) {
+        const canvas = await html2canvas(clonedSlides[i] as HTMLElement, {
           scale: 2,
           useCORS: true,
-          allowTaint: true,
+          allowTaint: false,
           backgroundColor: null,
-          logging: false,
+          imageTimeout: 0,
+          width: 1280,
+          height: 720,
+          windowWidth: 1280,
+          windowHeight: 720,
+          onclone: (clonedDoc) => {
+            clonedDoc.querySelectorAll('img').forEach(img => {
+              img.crossOrigin = 'anonymous';
+            });
+          }
         });
 
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, 0, 1280, 720);
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        if (i > 0) pdf.addPage([1280, 720], 'landscape');
+        pdf.addImage(imgData, 'JPEG', 0, 0, 1280, 720);
       }
 
-      // Cleanup
-      document.body.removeChild(pdfContainer);
-
+      document.body.removeChild(hiddenContainer);
       pdf.save(`Proposta_${data.clientName.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
@@ -115,28 +107,28 @@ const ProposalEditor: React.FC = () => {
   const visiblePages = data.pages.filter((p) => p.visible);
   let globalPageCounter = 0;
 
-  const renderPage = (pageType: PageType, pageNumber: number) => {
+  const renderPage = (pageType: PageType, pageNumber: number, bgColor: string) => {
     switch (pageType) {
       case "cover":
-        return <PageCover data={data} pageNumber={pageNumber} />;
+        return <PageCover data={data} pageNumber={pageNumber} bgColor={bgColor} />;
       case "diagnostico":
-        return <PageDiagnostico data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageDiagnostico data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       case "estrategia":
-        return <PageEstrategia data={data} textSizeClass={textSizeClass} startPageNumber={pageNumber} />;
+        return <PageEstrategia data={data} textSizeClass={textSizeClass} startPageNumber={pageNumber} bgColor={bgColor} />;
       case "argumentos":
-        return <PageArgumentos data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageArgumentos data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       case "sobre":
-        return <PageSobre data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageSobre data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       case "equipe":
-        return <PageEquipe data={data} pageNumber={pageNumber} />;
+        return <PageEquipe data={data} pageNumber={pageNumber} bgColor={bgColor} />;
       case "avaliacoes":
-        return <PageAvaliacoes data={data} pageNumber={pageNumber} />;
+        return <PageAvaliacoes data={data} pageNumber={pageNumber} bgColor={bgColor} />;
       case "investimento":
-        return <PageInvestimento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageInvestimento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       case "fechamento":
-        return <PageFechamento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageFechamento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       case "contato":
-        return <PageContato data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} />;
+        return <PageContato data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
       default:
         return null;
     }
@@ -197,6 +189,7 @@ const ProposalEditor: React.FC = () => {
             {visiblePages.map((page) => {
               globalPageCounter++;
               const currentPageNum = globalPageCounter;
+              const bgColor = page.customBgColor || DEFAULT_BG_COLORS[page.type];
 
               if (page.type === "estrategia") {
                 globalPageCounter += 3;
@@ -205,14 +198,14 @@ const ProposalEditor: React.FC = () => {
               if (page.type === "estrategia") {
                 return (
                   <div key={page.id} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0 }}>
-                    {renderPage(page.type, currentPageNum)}
+                    {renderPage(page.type, currentPageNum, bgColor)}
                   </div>
                 );
               }
 
               return (
                 <div key={page.id} data-proposal-page className={data.viewMode === "pages" ? "slide-shadow" : ""} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0 }}>
-                  {renderPage(page.type, currentPageNum)}
+                  {renderPage(page.type, currentPageNum, bgColor)}
                 </div>
               );
             })}

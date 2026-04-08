@@ -5,15 +5,16 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
   const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
   const hasImage = !!data.fotoProximosPassos;
+  const bg = bgColor || '#0d2b45';
 
   return (
-    <div className="slide slide-dark geometric-dark" style={{ display: 'flex', padding: 0 }}>
-      {/* Content */}
+    <div className="slide geometric-dark" style={{ display: 'flex', padding: 0, backgroundColor: bg }}>
       <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', zIndex: 10, position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
           <div className="gold-bar-vertical" style={{ height: 40 }} />
@@ -46,11 +47,10 @@ const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber }) =>
         <div className="page-num">{pageNumber}</div>
       </div>
 
-      {/* Optional side image */}
       {hasImage && (
         <div style={{ width: '35%', position: 'relative', overflow: 'hidden' }}>
           <img src={data.fotoProximosPassos!} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0d2b45 0%, rgba(13,43,69,0.5) 30%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, ${bg} 0%, rgba(13,43,69,0.5) 30%, transparent 100%)` }} />
         </div>
       )}
     </div>

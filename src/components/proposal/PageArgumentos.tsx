@@ -5,13 +5,14 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
 
   return (
-    <div className="slide slide-light watermark-light" style={{ padding: '48px 64px' }}>
+    <div className="slide watermark-light" style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
         <div className="gold-bar-vertical" style={{ height: 40 }} />
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 26, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>

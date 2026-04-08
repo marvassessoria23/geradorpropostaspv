@@ -5,16 +5,16 @@ import logoImg from "@/assets/logo-paiva-nunes.png";
 interface Props {
   data: ProposalData;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
+const PageCover: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   const logo = data.logoImage || logoImg;
   const logoW = data.logoSize || 140;
-  const hasCustomLogo = !!data.logoImage;
   const coverPhotoPosition = data.coverPhotoPosition ?? 15;
 
   return (
-    <div className="slide slide-dark geometric-dark" style={{ display: 'flex', padding: 0 }}>
+    <div className="slide geometric-dark" style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#0d2b45' }}>
       {/* Left content */}
       <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 10, position: 'relative' }}>
         <div />
@@ -33,9 +33,7 @@ const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
           </h2>
         </div>
 
-        {/* Logo at bottom — show only image when custom logo uploaded */}
         <div>
-          {/* Office name and subtitle ABOVE logo */}
           <div style={{ marginBottom: 12 }}>
             <p style={{ fontFamily: "'Playfair Display', serif", color: '#ffffff', fontSize: 18, letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}>
               {data.nomeEscritorio}
@@ -56,15 +54,11 @@ const PageCover: React.FC<Props> = ({ data, pageNumber }) => {
               src={data.coverImage}
               alt=""
               style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                objectPosition: `center ${coverPhotoPosition}%`,
+                position: 'absolute', inset: 0, width: '100%', height: '100%',
+                objectFit: 'cover', objectPosition: `center ${coverPhotoPosition}%`,
               }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, #0d2b45 0%, rgba(13,43,69,0.6) 30%, transparent 100%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, ${bgColor || '#0d2b45'} 0%, rgba(13,43,69,0.6) 30%, transparent 100%)` }} />
           </>
         ) : (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(13,43,69,0.8), rgba(13,43,69,0.3), rgba(201,168,76,0.1))' }}>

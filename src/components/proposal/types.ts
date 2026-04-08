@@ -36,7 +36,21 @@ export interface ProposalPage {
   id: string;
   type: PageType;
   visible: boolean;
+  customBgColor?: string;
 }
+
+export const DEFAULT_BG_COLORS: Record<PageType, string> = {
+  cover: "#0d2b45",
+  diagnostico: "#f5f0e8",
+  estrategia: "#f5f0e8",
+  argumentos: "#f5f0e8",
+  sobre: "#f5f0e8",
+  equipe: "#0d2b45",
+  avaliacoes: "#e8c96a",
+  investimento: "#0d2b45",
+  fechamento: "#0d2b45",
+  contato: "#f5f0e8",
+};
 
 export const PAGE_TYPE_LABELS: Record<PageType, string> = {
   cover: "Capa",

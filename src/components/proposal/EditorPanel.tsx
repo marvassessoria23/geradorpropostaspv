@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { ProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS } from "./types";
+import { ProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -573,6 +573,36 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-3 pb-3 pt-2">
+                {/* Per-page background color picker */}
+                <div className="flex items-center justify-between mb-3 pb-3" style={{ borderBottom: '1px solid rgba(201,168,76,0.1)' }}>
+                  <span style={{ color: 'rgba(201,168,76,0.7)', fontFamily: "'Lato', sans-serif", fontWeight: 600, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Cor de fundo</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={page.customBgColor || DEFAULT_BG_COLORS[page.type]}
+                      onChange={(e) => {
+                        const newPages = data.pages.map((p) =>
+                          p.id === page.id ? { ...p, customBgColor: e.target.value } : p
+                        );
+                        onChange({ pages: newPages });
+                      }}
+                      style={{ width: 24, height: 24, border: 'none', borderRadius: 4, cursor: 'pointer' }}
+                    />
+                    {page.customBgColor && (
+                      <button
+                        onClick={() => {
+                          const newPages = data.pages.map((p) =>
+                            p.id === page.id ? { ...p, customBgColor: undefined } : p
+                          );
+                          onChange({ pages: newPages });
+                        }}
+                        style={{ fontSize: 9, color: 'rgba(201,168,76,0.5)', fontFamily: "'Lato', sans-serif", background: 'none', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' }}
+                      >
+                        Restaurar
+                      </button>
+                    )}
+                  </div>
+                </div>
                 {renderSectionFields(page, index)}
               </AccordionContent>
             </AccordionItem>

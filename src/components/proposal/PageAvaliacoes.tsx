@@ -5,17 +5,17 @@ import { Star } from "lucide-react";
 interface Props {
   data: ProposalData;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageAvaliacoes: React.FC<Props> = ({ data, pageNumber }) => {
+const PageAvaliacoes: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   return (
-    <div className="slide slide-gold" style={{ padding: '48px 64px' }}>
+    <div className="slide" style={{ padding: '48px 64px', backgroundColor: bgColor || '#e8c96a' }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#0d2b45', fontSize: 30, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px 0' }}>
           O que nossos clientes dizem
         </h2>
 
-        {/* Google rating */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12, background: '#ffffff', borderRadius: 12, padding: '12px 24px', boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
           <div style={{ display: 'flex', gap: 2 }}>
             {[1, 2, 3, 4, 5].map((i) => (
@@ -27,7 +27,6 @@ const PageAvaliacoes: React.FC<Props> = ({ data, pageNumber }) => {
         </div>
       </div>
 
-      {/* Review cards grid */}
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(data.avaliacoes.length, 2)}, 1fr)`, gap: 20 }}>
         {data.avaliacoes.map((av) => (
           <div key={av.id} style={{ background: '#ffffff', borderRadius: 12, padding: 20, boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}>
