@@ -7,9 +7,10 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
   const logo = data.logoImage || logoImg;
   const logoW = Math.max((data.logoSize || 120) * 0.8, 48);
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
@@ -24,16 +25,14 @@ const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
   ].filter(item => item.value);
 
   return (
-    <div className="slide slide-light watermark-light" style={{ display: 'flex', padding: 0 }}>
-      {/* Left side image */}
+    <div className="slide watermark-light" style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#f5f0e8' }}>
       {data.fotoContato && (
         <div style={{ width: '35%', position: 'relative', overflow: 'hidden' }}>
           <img src={data.fotoContato} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to left, #f5f0e8 0%, rgba(245,240,232,0.5) 30%, transparent 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to left, ${bgColor || '#f5f0e8'} 0%, rgba(245,240,232,0.5) 30%, transparent 100%)` }} />
         </div>
       )}
 
-      {/* Content */}
       <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative' }}>
         <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto', marginBottom: 16 }} />
 

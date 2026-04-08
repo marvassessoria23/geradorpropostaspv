@@ -5,6 +5,7 @@ import { User } from "lucide-react";
 interface Props {
   data: ProposalData;
   pageNumber: number;
+  bgColor?: string;
 }
 
 const MemberCircle: React.FC<{ member: TeamMember }> = ({ member }) => (
@@ -37,13 +38,13 @@ const CategoryBadge: React.FC<{ label: string }> = ({ label }) => (
   </div>
 );
 
-const PageEquipe: React.FC<Props> = ({ data, pageNumber }) => {
+const PageEquipe: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   const gestao = data.team.filter((m) => m.category === "gestao");
   const juridico = data.team.filter((m) => m.category === "juridico");
   const admin = data.team.filter((m) => m.category === "administrativo");
 
   return (
-    <div className="slide slide-dark geometric-dark" style={{ padding: '48px 64px' }}>
+    <div className="slide geometric-dark" style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
         <div className="gold-bar-vertical" style={{ height: 32 }} />
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 26, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
@@ -61,7 +62,6 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber }) => {
             </div>
           </div>
         )}
-
         {juridico.length > 0 && (
           <div>
             <CategoryBadge label="Corpo Jurídico" />
@@ -70,7 +70,6 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber }) => {
             </div>
           </div>
         )}
-
         {admin.length > 0 && (
           <div>
             <CategoryBadge label="Suporte Administrativo / Financeiro" />

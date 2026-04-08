@@ -5,14 +5,14 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
+  bgColor?: string;
 }
 
-const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
   const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
 
   return (
-    <div className="slide slide-light watermark-light" style={{ padding: '48px 64px', display: 'flex' }}>
-      {/* Content */}
+    <div className="slide watermark-light" style={{ padding: '48px 64px', display: 'flex', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <div className="gold-bar-vertical" style={{ height: 48 }} />
@@ -38,7 +38,6 @@ const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
         </div>
       </div>
 
-      {/* Optional side image */}
       {data.fotoSobre && (
         <div style={{ width: '35%', marginLeft: 32, borderRadius: 8, overflow: 'hidden', position: 'relative' }}>
           <img src={data.fotoSobre} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

@@ -5,20 +5,19 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
+  bgColor?: string;
 }
 
 const fs = { small: 12, medium: 14, large: 16 };
 
-const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber }) => {
+const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
   const sz = fs[data.textSize] || 14;
 
   return (
-    <div className="slide slide-light watermark-light" style={{ padding: '48px 64px' }}>
-      {/* Decorative circles top-right */}
+    <div className="slide watermark-light" style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, border: '4px solid rgba(13,43,69,0.08)', borderRadius: '50%', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 40, right: 50, width: 100, height: 100, border: '3px solid rgba(201,168,76,0.1)', borderRadius: '50%', pointerEvents: 'none' }} />
 
-      {/* Gold badge */}
       <div className="gold-badge" style={{ marginBottom: 24 }}>
         CONTEXTO DA DEMANDA
       </div>

@@ -5,19 +5,20 @@ interface Props {
   data: ProposalData;
   textSizeClass: string;
   startPageNumber: number;
+  bgColor?: string;
 }
 
-const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber }) => {
+const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber, bgColor }) => {
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
   let pn = startPageNumber;
+  const bg = bgColor || '#f5f0e8';
 
-  const slideStyle = { padding: '48px 64px' };
+  const slideStyle = { padding: '48px 64px', backgroundColor: bg };
 
   return (
     <>
-      {/* Page 1 - Intro + Movimento 1 part 1 */}
       <div data-proposal-page className="slide-shadow">
-        <div className="slide slide-light watermark-light" style={slideStyle}>
+        <div className="slide watermark-light" style={slideStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
             <div className="gold-bar-vertical" style={{ height: 48 }} />
             <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
@@ -54,9 +55,8 @@ const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber 
         </div>
       </div>
 
-      {/* Page 2 - Movimento 1 part 2 */}
       <div data-proposal-page className="slide-shadow">
-        <div className="slide slide-light watermark-light" style={slideStyle}>
+        <div className="slide watermark-light" style={slideStyle}>
           <div style={{ marginLeft: 24, marginBottom: 24 }}>
             <div style={{ display: 'flex', gap: 8 }}>
               <span style={{ color: '#c9a84c', fontWeight: 700, fontSize: 14, flexShrink: 0 }}>3.</span>
@@ -74,9 +74,8 @@ const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber 
         </div>
       </div>
 
-      {/* Page 3 - Movimento 2 */}
       <div data-proposal-page className="slide-shadow">
-        <div className="slide slide-light watermark-light" style={slideStyle}>
+        <div className="slide watermark-light" style={slideStyle}>
           <div style={{ background: 'rgba(26,58,92,0.05)', borderRadius: 8, padding: '12px 16px', marginBottom: 24 }}>
             <h3 style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, color: '#1a3a5c', fontSize: 16, margin: 0 }}>{data.movimento2Title}</h3>
           </div>
@@ -102,9 +101,8 @@ const PageEstrategia: React.FC<Props> = ({ data, textSizeClass, startPageNumber 
         </div>
       </div>
 
-      {/* Page 4 - Movimento 3 */}
       <div data-proposal-page className="slide-shadow">
-        <div className="slide slide-light watermark-light" style={slideStyle}>
+        <div className="slide watermark-light" style={slideStyle}>
           <div style={{ background: 'rgba(26,58,92,0.05)', borderRadius: 8, padding: '12px 16px', marginBottom: 24 }}>
             <h3 style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, color: '#1a3a5c', fontSize: 16, margin: 0 }}>{data.movimento3Title}</h3>
           </div>
