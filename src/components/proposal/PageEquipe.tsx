@@ -44,7 +44,7 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   const admin = data.team.filter((m) => m.category === "administrativo");
 
   return (
-    <div className="slide geometric-dark" style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
+    <div className="slide geometric-dark" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
         <div className="gold-bar-vertical" style={{ height: 32 }} />
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 26, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>

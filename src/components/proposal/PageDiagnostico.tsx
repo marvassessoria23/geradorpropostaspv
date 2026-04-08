@@ -14,7 +14,7 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
   const sz = fs[data.textSize] || 14;
 
   return (
-    <div className="slide watermark-light" style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
+    <div className="slide watermark-light" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, border: '4px solid rgba(13,43,69,0.08)', borderRadius: '50%', pointerEvents: 'none' }} />
       <div style={{ position: 'absolute', top: 40, right: 50, width: 100, height: 100, border: '3px solid rgba(201,168,76,0.1)', borderRadius: '50%', pointerEvents: 'none' }} />
 

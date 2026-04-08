@@ -12,7 +12,7 @@ const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgCo
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
 
   return (
-    <div className="slide watermark-light" style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
+    <div className="slide watermark-light" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
         <div className="gold-bar-vertical" style={{ height: 40 }} />
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 26, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>

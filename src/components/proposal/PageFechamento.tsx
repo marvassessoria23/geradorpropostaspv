@@ -14,7 +14,7 @@ const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgCo
   const bg = bgColor || '#0d2b45';
 
   return (
-    <div className="slide geometric-dark" style={{ display: 'flex', padding: 0, backgroundColor: bg }}>
+    <div className="slide geometric-dark" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bg }}>
       <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', zIndex: 10, position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 40 }}>
           <div className="gold-bar-vertical" style={{ height: 40 }} />
