@@ -1,32 +1,27 @@
 
 
-# Fix PDF Export, Add Per-Slide Background Color
+# Fix PDF Export (Black Patches + Missing Images) + Generation Overlay
 
 ## Changes
 
-### 1. Fix PDF generation (`ProposalEditor.tsx`)
-Replace `generatePDF` with the user's provided implementation:
-- Use `position:fixed` hidden container
-- Clone slides individually via `.proposal-page` selector (not the whole preview wrapper)
-- Reset `transform`, `transformOrigin`, `overflow` on each cloned slide
-- Use `allowTaint: false`, `imageTimeout: 0`, `width/height: 1280/720`, `windowWidth/windowHeight: 1280/720`
-- Add `onclone` to set `crossOrigin = 'anonymous'` on all images
-- Add `compress: true` to jsPDF options
+### 1. Replace `generatePDF` in `ProposalEditor.tsx` (lines 53-104)
+Replace with the user's provided implementation that:
+- Moves each real slide DOM node temporarily into an unscaled `position:fixed; opacity:0` wrapper instead of cloning
+- Resets `transform`, `width`, `position` on each slide before capture
+- Waits 150ms per slide for layout settling
+- Restores each slide to its original parent after capture
+- Uses `allowTaint: true`, PNG format, no fixed width/height constraints on html2canvas
+- This fixes both black patches (no forced 720px height) and missing images (real DOM nodes preserve base64 src)
 
-### 2. Add `customBgColor` to `ProposalPage` (`types.ts`)
-- Add optional `customBgColor?: string` field to `ProposalPage` interface
-- Define a `DEFAULT_BG_COLORS` map: dark pages (cover, equipe, investimento, fechamento) → `#0d2b45`, light pages (diagnostico, estrategia, argumentos, sobre, contato, avaliacoes) → `#f5f0e8` (avaliacoes could be `#e8c96a` per earlier spec)
+### 2. Add fullscreen overlay during PDF generation
+- Render a fixed overlay `div` when `generating === true` covering the entire viewport
+- Show spinner + "Gerando PDF, aguarde..." message
+- Style: `position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7)` with centered white text and a CSS spinner
+- Prevents user interaction while slides are being moved in the DOM
 
-### 3. Pass background color to each page component (`ProposalEditor.tsx`)
-- When rendering each page, compute `bgColor = page.customBgColor || DEFAULT_BG_COLORS[page.type]`
-- Pass `bgColor` prop to each page component
+### 3. Verify image sources
+- Quick audit of page components to confirm all `<img>` tags use base64 data or the imported `logoImg` asset (ES module import). No external URLs or relative paths should exist. The logo import `@/assets/logo-paiva-nunes.png` is bundled by Vite as a data URL or asset path — this is safe since html2canvas captures from the real DOM.
 
-### 4. Update all 10 page components
-- Add `bgColor?: string` to each component's props
-- Apply `style={{ backgroundColor: bgColor }}` on the root `.slide` div instead of hardcoded class-based backgrounds
-
-### 5. Add per-page color picker in `EditorPanel.tsx`
-- At the top of each section's accordion content, add a color picker labeled "Cor de fundo desta página"
-- Include a "Restaurar padrão" button that clears `customBgColor` (sets to `undefined`)
-- Update via the page's entry in the `data.pages` array
+## Files Modified
+- `src/components/proposal/ProposalEditor.tsx` — new generatePDF + overlay
 
