@@ -250,3 +250,7 @@
     page-break-inside: avoid;
   }
 }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
