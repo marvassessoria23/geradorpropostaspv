@@ -13,7 +13,7 @@ const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bg
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
 
   return (
-    <div className="slide geometric-dark" style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
+    <div className="slide geometric-dark" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 32 }}>
         <div className="gold-bar-vertical" style={{ height: 40 }} />
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>

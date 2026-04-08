@@ -12,7 +12,7 @@ const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }
   const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
 
   return (
-    <div className="slide watermark-light" style={{ padding: '48px 64px', display: 'flex', backgroundColor: bgColor || '#f5f0e8' }}>
+    <div className="slide watermark-light" data-slide style={{ padding: '48px 64px', display: 'flex', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <div className="gold-bar-vertical" style={{ height: 48 }} />

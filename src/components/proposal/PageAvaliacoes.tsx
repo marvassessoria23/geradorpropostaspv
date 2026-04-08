@@ -10,7 +10,7 @@ interface Props {
 
 const PageAvaliacoes: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   return (
-    <div className="slide" style={{ padding: '48px 64px', backgroundColor: bgColor || '#e8c96a' }}>
+    <div className="slide" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#e8c96a' }}>
       <div style={{ textAlign: 'center', marginBottom: 32 }}>
         <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#0d2b45', fontSize: 30, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: '0 0 16px 0' }}>
           O que nossos clientes dizem

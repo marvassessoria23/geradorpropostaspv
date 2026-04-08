@@ -25,7 +25,7 @@ const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor
   ].filter(item => item.value);
 
   return (
-    <div className="slide watermark-light" style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#f5f0e8' }}>
+    <div className="slide watermark-light" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#f5f0e8' }}>
       {data.fotoContato && (
         <div style={{ width: '35%', position: 'relative', overflow: 'hidden' }}>
           <img src={data.fotoContato} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />

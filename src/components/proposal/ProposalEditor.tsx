@@ -12,7 +12,7 @@ import PageInvestimento from "./PageInvestimento";
 import PageFechamento from "./PageFechamento";
 import PageContato from "./PageContato";
 import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
-import html2canvas from "html2canvas-pro";
+import { toPng } from 'html-to-image';
 import { jsPDF } from "jspdf";
 import logoImg from "@/assets/logo-paiva-nunes.png";
 
@@ -56,19 +56,6 @@ const ProposalEditor: React.FC = () => {
     try {
       await document.fonts.ready;
 
-      const tempWrapper = document.createElement('div');
-      tempWrapper.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1280px;
-        height: auto;
-        z-index: 9999;
-        pointer-events: none;
-        opacity: 0;
-      `;
-      document.body.appendChild(tempWrapper);
-
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'px',
@@ -76,45 +63,20 @@ const ProposalEditor: React.FC = () => {
         compress: true,
       });
 
-      const slides = Array.from(document.querySelectorAll('.proposal-page'));
+      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
 
       for (let i = 0; i < slides.length; i++) {
-        const slide = slides[i] as HTMLElement;
-        const parent = slide.parentElement!;
-        const nextSibling = slide.nextSibling;
-
-        tempWrapper.appendChild(slide);
-        slide.style.transform = 'none';
-        slide.style.transformOrigin = 'unset';
-        slide.style.width = '1280px';
-        slide.style.position = 'relative';
-
-        await new Promise(r => setTimeout(r, 150));
-
-        const canvas = await html2canvas(slide, {
-          scale: 2,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: null,
-          imageTimeout: 15000,
-          logging: false,
+        const dataUrl = await toPng(slides[i], {
+          width: 1280,
+          height: 720,
+          style: { transform: 'none', transformOrigin: 'unset' },
+          pixelRatio: 2,
         });
 
-        if (nextSibling) {
-          parent.insertBefore(slide, nextSibling);
-        } else {
-          parent.appendChild(slide);
-        }
-        slide.style.transform = '';
-        slide.style.width = '';
-        slide.style.position = '';
-
-        const imgData = canvas.toDataURL('image/png');
         if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(imgData, 'PNG', 0, 0, 1280, 720);
+        pdf.addImage(dataUrl, 'PNG', 0, 0, 1280, 720);
       }
 
-      document.body.removeChild(tempWrapper);
       pdf.save(`Proposta_${data.clientName.replace(/\s+/g, "_")}.pdf`);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
