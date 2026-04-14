@@ -12,8 +12,6 @@ import PageInvestimento from "./PageInvestimento";
 import PageFechamento from "./PageFechamento";
 import PageContato from "./PageContato";
 import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
-import { toPng } from 'html-to-image';
-import { jsPDF } from "jspdf";
 import logoImg from "@/assets/logo-paiva-nunes.png";
 
 const TEXT_SIZE_MAP = {
@@ -22,9 +20,25 @@ const TEXT_SIZE_MAP = {
   large: "text-base",
 };
 
+const STORAGE_KEY = 'proposta_dados_v1';
+
+const loadSavedData = (): ProposalData | null => {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved) as ProposalData;
+    }
+  } catch (e) {
+    console.error('Erro ao carregar dados salvos:', e);
+  }
+  return null;
+};
+
 const ProposalEditor: React.FC = () => {
-  const [data, setData] = useState<ProposalData>(defaultProposalData);
-  const [generating, setGenerating] = useState(false);
+  const [data, setData] = useState<ProposalData>(() => {
+    const saved = loadSavedData();
+    return saved || defaultProposalData;
+  });
   const [panelOpen, setPanelOpen] = useState(true);
   const [previewScale, setPreviewScale] = useState(0.6);
   const previewRef = useRef<HTMLDivElement>(null);
@@ -33,6 +47,17 @@ const ProposalEditor: React.FC = () => {
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (e: any) {
+      if (e?.name === 'QuotaExceededError') {
+        alert('Atenção: o volume de imagens é muito grande para salvar automaticamente. Considere usar imagens menores.');
+      }
+    }
+  }, [data]);
 
   useEffect(() => {
     const updateScale = () => {
@@ -48,6 +73,10 @@ const ProposalEditor: React.FC = () => {
   }, [panelOpen]);
 
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
+
+  const generatePDF = () => {
+    window.print();
+  };
 
   const generatePDF = async () => {
     if (generating) return;
@@ -117,12 +146,6 @@ const ProposalEditor: React.FC = () => {
 
   return (
     <div className="h-screen flex flex-col" style={{ background: '#0a1628' }}>
-      {generating && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 99999, background: 'rgba(0,0,0,0.7)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-          <div style={{ width: 48, height: 48, border: '4px solid rgba(255,255,255,0.2)', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <span style={{ color: '#ffffff', fontFamily: "'Lato', sans-serif", fontSize: 18, fontWeight: 600 }}>Gerando PDF, aguarde...</span>
-        </div>
-      )}
       {/* Header */}
       <header style={{ flexShrink: 0, borderBottom: '1px solid rgba(201,168,76,0.12)', padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(13,43,69,0.95)', backdropFilter: 'blur(8px)', zIndex: 50 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -144,11 +167,10 @@ const ProposalEditor: React.FC = () => {
         </div>
         <button
           onClick={generatePDF}
-          disabled={generating}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(to right, #c9a84c, #e8c96a)', color: '#0d2b45', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,76,0.25)', opacity: generating ? 0.5 : 1 }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(to right, #c9a84c, #e8c96a)', color: '#0d2b45', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,76,0.25)' }}
         >
           <FileDown size={16} />
-          {generating ? "Gerando..." : "Gerar PDF"}
+          Gerar PDF
         </button>
       </header>
 
@@ -156,13 +178,13 @@ const ProposalEditor: React.FC = () => {
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {/* Editor Panel */}
         {panelOpen && (
-          <div style={{ width: 380, flexShrink: 0, borderRight: '1px solid rgba(201,168,76,0.08)', overflow: 'hidden', background: '#0f1f33' }}>
+          <div className="no-print" style={{ width: 380, flexShrink: 0, borderRight: '1px solid rgba(201,168,76,0.08)', overflow: 'hidden', background: '#0f1f33' }}>
             <EditorPanel data={data} onChange={updateData} />
           </div>
         )}
 
         {/* Preview */}
-        <div ref={containerRef} style={{ flex: 1, overflowY: 'auto', padding: 32, background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
+        <div ref={containerRef} className="print-area" style={{ flex: 1, overflowY: 'auto', padding: 32, background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
           <div
             ref={previewRef}
             className="preview-wrapper"

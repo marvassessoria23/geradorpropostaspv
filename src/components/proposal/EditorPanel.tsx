@@ -610,7 +610,7 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
         </Accordion>
 
         {/* Add page */}
-        <div className="mt-4 pb-6">
+        <div className="mt-4 pb-3">
           <select
             onChange={(e) => { if (e.target.value) { addPage(e.target.value as PageType); e.target.value = ""; } }}
             defaultValue=""
@@ -621,6 +621,21 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
               <option key={key} value={key}>{label}</option>
             ))}
           </select>
+        </div>
+
+        {/* Reset button */}
+        <div className="pb-6 px-1">
+          <button
+            onClick={() => {
+              if (window.confirm('Tem certeza? Todos os dados e imagens serão perdidos.')) {
+                localStorage.removeItem('proposta_dados_v1');
+                window.location.reload();
+              }
+            }}
+            style={{ width: '100%', padding: '8px 12px', borderRadius: 8, background: 'transparent', border: '1px solid rgba(255,100,100,0.2)', color: 'rgba(255,100,100,0.6)', fontFamily: "'Lato', sans-serif", fontSize: 11, cursor: 'pointer' }}
+          >
+            Limpar e começar do zero
+          </button>
         </div>
       </div>
     </div>
