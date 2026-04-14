@@ -1,27 +1,43 @@
 
 
-# Fix PDF Export (Black Patches + Missing Images) + Generation Overlay
+# Fix PDF Export + Add Data Persistence
 
-## Changes
+## Problem 1: PDF Export — Switch to `window.print()` with Print CSS
 
-### 1. Replace `generatePDF` in `ProposalEditor.tsx` (lines 53-104)
-Replace with the user's provided implementation that:
-- Moves each real slide DOM node temporarily into an unscaled `position:fixed; opacity:0` wrapper instead of cloning
-- Resets `transform`, `width`, `position` on each slide before capture
-- Waits 150ms per slide for layout settling
-- Restores each slide to its original parent after capture
-- Uses `allowTaint: true`, PNG format, no fixed width/height constraints on html2canvas
-- This fixes both black patches (no forced 720px height) and missing images (real DOM nodes preserve base64 src)
+The current `html-to-image` + `jsPDF` approach has persistent issues with scale transforms, base64 images, and fonts. Replace it entirely with `window.print()`, which uses the browser's native rendering engine for perfect fidelity.
 
-### 2. Add fullscreen overlay during PDF generation
-- Render a fixed overlay `div` when `generating === true` covering the entire viewport
-- Show spinner + "Gerando PDF, aguarde..." message
-- Style: `position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.7)` with centered white text and a CSS spinner
-- Prevents user interaction while slides are being moved in the DOM
+### Changes:
 
-### 3. Verify image sources
-- Quick audit of page components to confirm all `<img>` tags use base64 data or the imported `logoImg` asset (ES module import). No external URLs or relative paths should exist. The logo import `@/assets/logo-paiva-nunes.png` is bundled by Vite as a data URL or asset path — this is safe since html2canvas captures from the real DOM.
+**`src/index.css`** — Add `@media print` block at the end:
+- Hide everything except `.print-area` (`body > *:not(.print-area) { display: none }`)
+- Style `.proposal-page` slides to `297mm × 210mm`, `page-break-after: always`, `transform: none`, no margin
+- Set `@page { size: A4 landscape; margin: 0 }`
+- Force `-webkit-print-color-adjust: exact`
+
+**`src/components/proposal/ProposalEditor.tsx`**:
+- Remove `html-to-image` and `jsPDF` imports
+- Replace `generatePDF` with simple `window.print()` call
+- Add `print-area` class to the preview wrapper div that contains all slides
+- Remove the generating overlay (print dialog is native)
+- Remove `generating` state since print is synchronous from our perspective
+
+## Problem 2: localStorage Persistence
+
+### Changes:
+
+**`src/components/proposal/ProposalEditor.tsx`**:
+- Define `STORAGE_KEY = 'proposta_dados_v1'`
+- Initialize `data` state with lazy initializer that loads from `localStorage` (falling back to `defaultProposalData`)
+- Add `useEffect` that saves `data` to `localStorage` on every change, with `try/catch` for `QuotaExceededError` (shows alert warning about image sizes)
+- Keep `updateData` as-is — it already updates `data` state, which triggers the save effect
+
+**`src/components/proposal/EditorPanel.tsx`**:
+- Add a "Limpar e começar do zero" button at the bottom of the panel
+- On click: `localStorage.removeItem(STORAGE_KEY)` then `window.location.reload()`
 
 ## Files Modified
-- `src/components/proposal/ProposalEditor.tsx` — new generatePDF + overlay
+- `src/index.css` — print CSS
+- `src/components/proposal/ProposalEditor.tsx` — window.print + localStorage
+- `src/components/proposal/EditorPanel.tsx` — reset button
+- `package.json` — remove `html-to-image` dependency
 
