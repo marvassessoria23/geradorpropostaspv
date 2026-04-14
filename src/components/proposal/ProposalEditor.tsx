@@ -78,41 +78,6 @@ const ProposalEditor: React.FC = () => {
     window.print();
   };
 
-  const generatePDF = async () => {
-    if (generating) return;
-    setGenerating(true);
-
-    try {
-      await document.fonts.ready;
-
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [1280, 720],
-        compress: true,
-      });
-
-      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
-
-      for (let i = 0; i < slides.length; i++) {
-        const dataUrl = await toPng(slides[i], {
-          width: 1280,
-          height: 720,
-          style: { transform: 'none', transformOrigin: 'unset' },
-          pixelRatio: 2,
-        });
-
-        if (i > 0) pdf.addPage([1280, 720], 'landscape');
-        pdf.addImage(dataUrl, 'PNG', 0, 0, 1280, 720);
-      }
-
-      pdf.save(`Proposta_${data.clientName.replace(/\s+/g, "_")}.pdf`);
-    } catch (err) {
-      console.error("Erro ao gerar PDF:", err);
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   const visiblePages = data.pages.filter((p) => p.visible);
   let globalPageCounter = 0;
