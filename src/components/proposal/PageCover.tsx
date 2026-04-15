@@ -58,7 +58,7 @@ const PageCover: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
                 objectFit: 'cover', objectPosition: `center ${coverPhotoPosition}%`,
               }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(to right, ${bgColor || '#0d2b45'} 0%, rgba(13,43,69,0.6) 30%, transparent 100%)` }} />
+            <div style={{ position: 'absolute', top: 0, bottom: 0, left: -2, right: 0, background: `linear-gradient(to right, ${bgColor || '#0d2b45'} 0%, rgba(13,43,69,0.6) 35%, transparent 100%)`, zIndex: 1 }} />
           </>
         ) : (
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, rgba(13,43,69,0.8), rgba(13,43,69,0.3), rgba(201,168,76,0.1))' }}>
