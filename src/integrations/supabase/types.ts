@@ -14,7 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      proposta_config: {
+        Row: {
+          data: Json
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          data: Json
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          data?: Json
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

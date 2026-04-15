@@ -9,13 +9,13 @@ interface Props {
 }
 
 const MemberCircle: React.FC<{ member: TeamMember }> = ({ member }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 100 }}>
-    <div style={{ width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', border: '2px solid #c9a84c', flexShrink: 0 }}>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 100, textAlign: 'center' }}>
+    <div style={{ width: 100, height: 100, borderRadius: '50%', overflow: 'hidden', border: '2px solid #c9a84c', flexShrink: 0 }}>
       {member.photo ? (
-        <img src={member.photo} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <img src={member.photo} alt={member.name} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 20%' }} />
       ) : (
         <div style={{ width: '100%', height: '100%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <User size={28} color="rgba(255,255,255,0.3)" />
+          <User size={32} color="rgba(255,255,255,0.3)" />
         </div>
       )}
     </div>
@@ -57,7 +57,7 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
         {gestao.length > 0 && (
           <div>
             <CategoryBadge label="Gestão Controladoria" />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 20px', justifyContent: 'flex-start' }}>
               {gestao.map((m) => <MemberCircle key={m.id} member={m} />)}
             </div>
           </div>
@@ -65,7 +65,7 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
         {juridico.length > 0 && (
           <div>
             <CategoryBadge label="Corpo Jurídico" />
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(juridico.length, 7)}, 1fr)`, gap: 20 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 20px', justifyContent: 'flex-start' }}>
               {juridico.map((m) => <MemberCircle key={m.id} member={m} />)}
             </div>
           </div>
@@ -73,7 +73,7 @@ const PageEquipe: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
         {admin.length > 0 && (
           <div>
             <CategoryBadge label="Suporte Administrativo / Financeiro" />
-            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(admin.length, 7)}, 1fr)`, gap: 20 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 20px', justifyContent: 'flex-start' }}>
               {admin.map((m) => <MemberCircle key={m.id} member={m} />)}
             </div>
           </div>
