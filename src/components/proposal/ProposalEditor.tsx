@@ -138,8 +138,7 @@ const ProposalEditor: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // Check for local backup first (from beforeunload)
-        const localBackup = localStorage.getItem('proposta_backup');
+        console.log('Iniciando carregamento...');
 
         // Load config from Supabase
         const { data: row, error } = await (supabase as any)
@@ -148,29 +147,41 @@ const ProposalEditor: React.FC = () => {
           .eq('id', 'config_global')
           .maybeSingle();
 
-        // Load all images
-        const images = await loadAllImages();
+        console.log('Config carregada:', { error, hasData: !!row?.data });
 
-        if (localBackup) {
-          try {
-            const parsed = JSON.parse(localBackup) as ProposalData;
-            setData(parsed);
-            // Sync backup to Supabase
-            const newImages = extractImages(parsed);
-            await Promise.all(Object.entries(newImages).map(([id, b64]) => saveImage(id, b64)));
-            const sanitized = sanitizeForSave(parsed);
-            await (supabase as any)
-              .from('proposta_config')
-              .upsert({ id: 'config_global', data: sanitized, updated_at: new Date().toISOString() });
-            localStorage.removeItem('proposta_backup');
-            prevImagesRef.current = newImages;
-          } catch {
-            localStorage.removeItem('proposta_backup');
+        if (!error && row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
+          const proposalData = row.data as ProposalData;
+
+          // Find which image references need loading
+          const imageRefs: string[] = [];
+          for (const field of IMAGE_FIELDS) {
+            const val = (proposalData as any)[field] as string | null;
+            if (val && typeof val === 'string' && val.startsWith('img:')) {
+              imageRefs.push(val.replace('img:', ''));
+            }
           }
-        } else if (!error && row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
-          const hydrated = rehydrateWithImages(row.data as ProposalData, images);
+          for (const m of proposalData.team || []) {
+            if (m.photo && m.photo.startsWith('img:')) {
+              imageRefs.push(m.photo.replace('img:', ''));
+            }
+          }
+
+          console.log('Imagens para carregar:', imageRefs);
+
+          // Load each image individually (avoids timeout from loading all at once)
+          const images: Record<string, string> = {};
+          await Promise.all(
+            imageRefs.map(async (id) => {
+              const base64 = await loadImage(id);
+              if (base64) images[id] = base64;
+            })
+          );
+
+          console.log('Imagens carregadas:', Object.keys(images).length);
+
+          const hydrated = rehydrateWithImages(proposalData, images);
           setData(hydrated);
-          prevImagesRef.current = images;
+          prevImagesRef.current = extractImages(hydrated);
         }
       } catch (e) {
         console.error('Erro ao carregar dados:', e);
@@ -248,10 +259,15 @@ const ProposalEditor: React.FC = () => {
     };
   }, [data, saveImagesImmediately]);
 
-  // Backup to localStorage on beforeunload
+  // Backup only non-image config to localStorage on beforeunload
   useEffect(() => {
     const handleBeforeUnload = () => {
-      localStorage.setItem('proposta_backup', JSON.stringify(data));
+      try {
+        const sanitized = sanitizeForSave(data);
+        localStorage.setItem('proposta_backup', JSON.stringify(sanitized));
+      } catch {
+        // Ignore quota errors
+      }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
