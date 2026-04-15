@@ -14,9 +14,9 @@ const PageCover: React.FC<Props> = ({ data, pageNumber, bgColor }) => {
   const coverPhotoPosition = data.coverPhotoPosition ?? 15;
 
   return (
-    <div className="slide geometric-dark" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#0d2b45' }}>
+    <div className="slide geometric-dark" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#0d2b45', overflow: 'hidden' }}>
       {/* Left content */}
-      <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 10, position: 'relative' }}>
+      <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', zIndex: 10, position: 'relative', border: 'none', outline: 'none' }}>
         <div />
 
         <div>
