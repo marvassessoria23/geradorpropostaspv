@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
-import { ProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
+import { ProposalData, defaultProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
+import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -626,9 +627,15 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
         {/* Reset button */}
         <div className="pb-6 px-1">
           <button
-            onClick={() => {
+            onClick={async () => {
               if (window.confirm('Tem certeza? Todos os dados e imagens serão perdidos.')) {
-                localStorage.removeItem('proposta_dados_v1');
+                await supabase
+                  .from('proposta_config')
+                  .upsert({
+                    id: 'config_global',
+                    data: defaultProposalData as unknown as Record<string, unknown>,
+                    updated_at: new Date().toISOString()
+                  });
                 window.location.reload();
               }
             }}
