@@ -1,43 +1,51 @@
 
 
-# Fix PDF Export + Add Data Persistence
+# Persistência Global com Supabase
 
-## Problem 1: PDF Export — Switch to `window.print()` with Print CSS
+## Pré-requisito
+Ativar Lovable Cloud no projeto para ter Supabase integrado. Isso criará os arquivos em `src/integrations/supabase/`.
 
-The current `html-to-image` + `jsPDF` approach has persistent issues with scale transforms, base64 images, and fonts. Replace it entirely with `window.print()`, which uses the browser's native rendering engine for perfect fidelity.
+## Alterações
 
-### Changes:
+### 1. Criar tabela `proposta_config`
+Migration SQL:
+```sql
+create table proposta_config (
+  id text primary key default 'config_global',
+  data jsonb not null,
+  updated_at timestamp with time zone default now()
+);
 
-**`src/index.css`** — Add `@media print` block at the end:
-- Hide everything except `.print-area` (`body > *:not(.print-area) { display: none }`)
-- Style `.proposal-page` slides to `297mm × 210mm`, `page-break-after: always`, `transform: none`, no margin
-- Set `@page { size: A4 landscape; margin: 0 }`
-- Force `-webkit-print-color-adjust: exact`
+alter table proposta_config enable row level security;
 
-**`src/components/proposal/ProposalEditor.tsx`**:
-- Remove `html-to-image` and `jsPDF` imports
-- Replace `generatePDF` with simple `window.print()` call
-- Add `print-area` class to the preview wrapper div that contains all slides
-- Remove the generating overlay (print dialog is native)
-- Remove `generating` state since print is synchronous from our perspective
+create policy "Allow public read" on proposta_config for select using (true);
+create policy "Allow public update" on proposta_config for update using (true);
+create policy "Allow public insert" on proposta_config for insert with check (true);
 
-## Problem 2: localStorage Persistence
+insert into proposta_config (id, data) values ('config_global', '{}');
+```
 
-### Changes:
+RLS aberta (select/insert/update para todos) porque o sistema é uma ferramenta interna sem autenticação — qualquer pessoa que acesse vê e edita os mesmos dados.
 
-**`src/components/proposal/ProposalEditor.tsx`**:
-- Define `STORAGE_KEY = 'proposta_dados_v1'`
-- Initialize `data` state with lazy initializer that loads from `localStorage` (falling back to `defaultProposalData`)
-- Add `useEffect` that saves `data` to `localStorage` on every change, with `try/catch` for `QuotaExceededError` (shows alert warning about image sizes)
-- Keep `updateData` as-is — it already updates `data` state, which triggers the save effect
+### 2. Reescrever `ProposalEditor.tsx`
+- Remover localStorage (remover `STORAGE_KEY`, `loadSavedData`, e o `useEffect` de auto-save local)
+- Adicionar estados: `isLoading` (true inicialmente), `saveStatus` ('saved' | 'saving' | 'error')
+- Adicionar `saveTimerRef = useRef<NodeJS.Timeout | null>(null)`
+- **Carregar do Supabase ao montar**: `useEffect` assíncrono que faz `supabase.from('proposta_config').select('data').eq('id','config_global').single()`, seta `data` se existir, seta `isLoading = false`
+- **Salvar com debounce de 1s**: `useEffect` que observa `data`, ignora se `isLoading`, faz `clearTimeout` + `setTimeout(1000)` para upsert no Supabase
+- Mostrar tela de loading enquanto `isLoading === true`
+- Mostrar indicador de salvamento no header (✓ Salvo / ⏳ Salvando... / ⚠ Erro)
 
-**`src/components/proposal/EditorPanel.tsx`**:
-- Add a "Limpar e começar do zero" button at the bottom of the panel
-- On click: `localStorage.removeItem(STORAGE_KEY)` then `window.location.reload()`
+### 3. Atualizar `EditorPanel.tsx`
+- Remover o botão "Limpar e começar do zero" que usa localStorage
+- Substituir por botão que faz upsert de `defaultProposalData` no Supabase e recarrega
 
-## Files Modified
-- `src/index.css` — print CSS
-- `src/components/proposal/ProposalEditor.tsx` — window.print + localStorage
-- `src/components/proposal/EditorPanel.tsx` — reset button
-- `package.json` — remove `html-to-image` dependency
+### 4. Registrar tipo da tabela
+Adicionar `proposta_config` aos tipos TypeScript gerados do Supabase para que o cliente tipado funcione.
+
+## Arquivos Modificados
+- Migration SQL (nova tabela)
+- `src/components/proposal/ProposalEditor.tsx` — Supabase load/save substituindo localStorage
+- `src/components/proposal/EditorPanel.tsx` — botão reset via Supabase
+- `src/integrations/supabase/types.ts` — tipo da tabela
 
