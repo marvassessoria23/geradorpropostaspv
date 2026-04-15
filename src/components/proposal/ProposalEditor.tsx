@@ -13,6 +13,7 @@ import PageFechamento from "./PageFechamento";
 import PageContato from "./PageContato";
 import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
 import logoImg from "@/assets/logo-paiva-nunes.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const TEXT_SIZE_MAP = {
   small: "text-xs",
@@ -20,43 +21,74 @@ const TEXT_SIZE_MAP = {
   large: "text-base",
 };
 
-const STORAGE_KEY = 'proposta_dados_v1';
-
-const loadSavedData = (): ProposalData | null => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved) as ProposalData;
-    }
-  } catch (e) {
-    console.error('Erro ao carregar dados salvos:', e);
-  }
-  return null;
-};
-
 const ProposalEditor: React.FC = () => {
-  const [data, setData] = useState<ProposalData>(() => {
-    const saved = loadSavedData();
-    return saved || defaultProposalData;
-  });
+  const [data, setData] = useState<ProposalData>(defaultProposalData);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [panelOpen, setPanelOpen] = useState(true);
   const [previewScale, setPreviewScale] = useState(0.6);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoad = useRef(true);
+
+  // Load from Supabase on mount
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const { data: row, error } = await (supabase as any)
+          .from('proposta_config')
+          .select('data')
+          .eq('id', 'config_global')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Erro ao carregar dados:', error);
+        } else if (row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
+          setData(row.data as ProposalData);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar dados:', e);
+      } finally {
+        setIsLoading(false);
+        setTimeout(() => { isInitialLoad.current = false; }, 500);
+      }
+    };
+    loadData();
+  }, []);
 
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Auto-save to localStorage
+  // Auto-save to Supabase with 1s debounce
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch (e: any) {
-      if (e?.name === 'QuotaExceededError') {
-        alert('Atenção: o volume de imagens é muito grande para salvar automaticamente. Considere usar imagens menores.');
+    if (isInitialLoad.current) return;
+
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        setSaveStatus('saving');
+        const { error } = await (supabase as any)
+          .from('proposta_config')
+          .upsert({
+            id: 'config_global',
+            data: data,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+        setSaveStatus('saved');
+      } catch (e) {
+        console.error('Erro ao salvar:', e);
+        setSaveStatus('error');
       }
-    }
+    }, 1000);
+
+    return () => {
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    };
   }, [data]);
 
   useEffect(() => {
@@ -78,6 +110,13 @@ const ProposalEditor: React.FC = () => {
     window.print();
   };
 
+  if (isLoading) {
+    return (
+      <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1628', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontSize: 18 }}>
+        Carregando proposta...
+      </div>
+    );
+  }
 
   const visiblePages = data.pages.filter((p) => p.visible);
   let globalPageCounter = 0;
@@ -130,13 +169,20 @@ const ProposalEditor: React.FC = () => {
             </div>
           </div>
         </div>
-        <button
-          onClick={generatePDF}
-          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(to right, #c9a84c, #e8c96a)', color: '#0d2b45', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,76,0.25)' }}
-        >
-          <FileDown size={16} />
-          Gerar PDF
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <span style={{ fontSize: 11, fontFamily: "'Lato', sans-serif", color: saveStatus === 'saved' ? 'rgba(100,200,100,0.7)' : saveStatus === 'saving' ? 'rgba(201,168,76,0.7)' : 'rgba(239,68,68,0.7)' }}>
+            {saveStatus === 'saved' && '✓ Salvo'}
+            {saveStatus === 'saving' && '⏳ Salvando...'}
+            {saveStatus === 'error' && '⚠ Erro ao salvar'}
+          </span>
+          <button
+            onClick={generatePDF}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(to right, #c9a84c, #e8c96a)', color: '#0d2b45', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,76,0.25)' }}
+          >
+            <FileDown size={16} />
+            Gerar PDF
+          </button>
+        </div>
       </header>
 
       {/* Body */}
