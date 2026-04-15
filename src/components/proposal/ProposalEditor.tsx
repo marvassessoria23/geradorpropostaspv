@@ -39,13 +39,24 @@ const deleteImage = async (id: string) => {
   await (supabase as any).from('proposta_imagens').delete().eq('id', id);
 };
 
-// Load all images from proposta_imagens
-const loadAllImages = async (): Promise<Record<string, string>> => {
+// Load a single image from proposta_imagens
+const loadImage = async (id: string): Promise<string | null> => {
   const { data, error } = await (supabase as any)
     .from('proposta_imagens')
-    .select('id, base64');
-  if (error || !data) return {};
-  return Object.fromEntries((data as any[]).map((row: any) => [row.id, row.base64]));
+    .select('base64')
+    .eq('id', id)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data.base64;
+};
+
+// Load only the image IDs (not data) to know which exist
+const loadImageIds = async (): Promise<string[]> => {
+  const { data, error } = await (supabase as any)
+    .from('proposta_imagens')
+    .select('id');
+  if (error || !data) return [];
+  return (data as any[]).map((row: any) => row.id);
 };
 
 // Strip base64 from data, replacing with img: references
