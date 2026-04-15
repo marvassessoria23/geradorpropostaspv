@@ -32,6 +32,24 @@ export type Database = {
         }
         Relationships: []
       }
+      proposta_imagens: {
+        Row: {
+          base64: string
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          base64: string
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          base64?: string
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
