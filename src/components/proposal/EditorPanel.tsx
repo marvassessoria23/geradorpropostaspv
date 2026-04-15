@@ -629,6 +629,18 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
           <button
             onClick={async () => {
               if (window.confirm('Tem certeza? Todos os dados e imagens serão perdidos.')) {
+                // Clear images table
+                const { data: imgs } = await (supabase as any)
+                  .from('proposta_imagens')
+                  .select('id');
+                if (imgs && imgs.length > 0) {
+                  await Promise.all(
+                    (imgs as any[]).map((img: any) =>
+                      (supabase as any).from('proposta_imagens').delete().eq('id', img.id)
+                    )
+                  );
+                }
+                // Reset config
                 await (supabase as any)
                   .from('proposta_config')
                   .upsert({
@@ -636,6 +648,7 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
                     data: defaultProposalData,
                     updated_at: new Date().toISOString()
                   });
+                localStorage.removeItem('proposta_backup');
                 window.location.reload();
               }
             }}

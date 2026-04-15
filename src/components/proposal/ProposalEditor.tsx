@@ -21,6 +21,96 @@ const TEXT_SIZE_MAP = {
   large: "text-base",
 };
 
+// Image fields that live at the top level of ProposalData
+const IMAGE_FIELDS: (keyof ProposalData)[] = [
+  'coverImage', 'logoImage', 'advogadoPhoto', 'fotoSobre', 'fotoProximosPassos', 'fotoContato'
+];
+
+// Save a single image to proposta_imagens
+const saveImage = async (id: string, base64: string) => {
+  const { error } = await (supabase as any)
+    .from('proposta_imagens')
+    .upsert({ id, base64, updated_at: new Date().toISOString() });
+  if (error) console.error('Erro ao salvar imagem:', id, error);
+};
+
+// Delete a single image from proposta_imagens
+const deleteImage = async (id: string) => {
+  await (supabase as any).from('proposta_imagens').delete().eq('id', id);
+};
+
+// Load all images from proposta_imagens
+const loadAllImages = async (): Promise<Record<string, string>> => {
+  const { data, error } = await (supabase as any)
+    .from('proposta_imagens')
+    .select('id, base64');
+  if (error || !data) return {};
+  return Object.fromEntries((data as any[]).map((row: any) => [row.id, row.base64]));
+};
+
+// Strip base64 from data, replacing with img: references
+const sanitizeForSave = (proposalData: ProposalData): ProposalData => {
+  const sanitized = { ...proposalData };
+
+  // Replace top-level image fields
+  for (const field of IMAGE_FIELDS) {
+    const val = sanitized[field] as string | null;
+    if (val && typeof val === 'string' && val.startsWith('data:')) {
+      (sanitized as any)[field] = `img:${field}`;
+    }
+  }
+
+  // Replace team member photos
+  sanitized.team = sanitized.team.map(m => ({
+    ...m,
+    photo: m.photo && m.photo.startsWith('data:') ? `img:team_${m.id}` : m.photo
+  }));
+
+  return sanitized;
+};
+
+// Extract all base64 images that need saving
+const extractImages = (proposalData: ProposalData): Record<string, string> => {
+  const images: Record<string, string> = {};
+
+  for (const field of IMAGE_FIELDS) {
+    const val = proposalData[field] as string | null;
+    if (val && typeof val === 'string' && val.startsWith('data:')) {
+      images[field as string] = val;
+    }
+  }
+
+  for (const m of proposalData.team) {
+    if (m.photo && m.photo.startsWith('data:')) {
+      images[`team_${m.id}`] = m.photo;
+    }
+  }
+
+  return images;
+};
+
+// Rehydrate data with images from the images table
+const rehydrateWithImages = (proposalData: ProposalData, images: Record<string, string>): ProposalData => {
+  const hydrated = { ...proposalData };
+
+  for (const field of IMAGE_FIELDS) {
+    const val = hydrated[field] as string | null;
+    if (val && typeof val === 'string' && val.startsWith('img:')) {
+      const key = val.replace('img:', '');
+      (hydrated as any)[field] = images[key] || null;
+    }
+  }
+
+  hydrated.team = hydrated.team.map(m => ({
+    ...m,
+    photo: m.photo && m.photo.startsWith('img:')
+      ? images[m.photo.replace('img:', '')] || null
+      : m.photo
+  }));
+
+  return hydrated;
+};
+
 const ProposalEditor: React.FC = () => {
   const [data, setData] = useState<ProposalData>(defaultProposalData);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,21 +121,45 @@ const ProposalEditor: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoad = useRef(true);
+  const prevImagesRef = useRef<Record<string, string>>({});
 
   // Load from Supabase on mount
   useEffect(() => {
     const loadData = async () => {
       try {
+        // Check for local backup first (from beforeunload)
+        const localBackup = localStorage.getItem('proposta_backup');
+
+        // Load config from Supabase
         const { data: row, error } = await (supabase as any)
           .from('proposta_config')
           .select('data')
           .eq('id', 'config_global')
           .maybeSingle();
 
-        if (error) {
-          console.error('Erro ao carregar dados:', error);
-        } else if (row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
-          setData(row.data as ProposalData);
+        // Load all images
+        const images = await loadAllImages();
+
+        if (localBackup) {
+          try {
+            const parsed = JSON.parse(localBackup) as ProposalData;
+            setData(parsed);
+            // Sync backup to Supabase
+            const newImages = extractImages(parsed);
+            await Promise.all(Object.entries(newImages).map(([id, b64]) => saveImage(id, b64)));
+            const sanitized = sanitizeForSave(parsed);
+            await (supabase as any)
+              .from('proposta_config')
+              .upsert({ id: 'config_global', data: sanitized, updated_at: new Date().toISOString() });
+            localStorage.removeItem('proposta_backup');
+            prevImagesRef.current = newImages;
+          } catch {
+            localStorage.removeItem('proposta_backup');
+          }
+        } else if (!error && row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
+          const hydrated = rehydrateWithImages(row.data as ProposalData, images);
+          setData(hydrated);
+          prevImagesRef.current = images;
         }
       } catch (e) {
         console.error('Erro ao carregar dados:', e);
@@ -61,6 +175,32 @@ const ProposalEditor: React.FC = () => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  // Save images immediately when they change (not debounced)
+  const saveImagesImmediately = useCallback(async (newData: ProposalData) => {
+    const currentImages = extractImages(newData);
+    const prevImages = prevImagesRef.current;
+
+    // Find new/changed images and save them
+    const savePromises: Promise<void>[] = [];
+    for (const [id, b64] of Object.entries(currentImages)) {
+      if (prevImages[id] !== b64) {
+        savePromises.push(saveImage(id, b64));
+      }
+    }
+
+    // Find deleted images
+    for (const id of Object.keys(prevImages)) {
+      if (!currentImages[id]) {
+        savePromises.push(deleteImage(id));
+      }
+    }
+
+    if (savePromises.length > 0) {
+      await Promise.all(savePromises);
+      prevImagesRef.current = currentImages;
+    }
+  }, []);
+
   // Auto-save to Supabase with 1s debounce
   useEffect(() => {
     if (isInitialLoad.current) return;
@@ -70,11 +210,17 @@ const ProposalEditor: React.FC = () => {
     saveTimerRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
+
+        // Save images first (immediately)
+        await saveImagesImmediately(data);
+
+        // Save config without base64
+        const sanitized = sanitizeForSave(data);
         const { error } = await (supabase as any)
           .from('proposta_config')
           .upsert({
             id: 'config_global',
-            data: data,
+            data: sanitized,
             updated_at: new Date().toISOString()
           });
 
@@ -89,6 +235,15 @@ const ProposalEditor: React.FC = () => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
+  }, [data, saveImagesImmediately]);
+
+  // Backup to localStorage on beforeunload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      localStorage.setItem('proposta_backup', JSON.stringify(data));
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [data]);
 
   useEffect(() => {
