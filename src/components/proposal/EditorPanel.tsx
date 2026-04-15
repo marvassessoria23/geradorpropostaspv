@@ -629,11 +629,11 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
           <button
             onClick={async () => {
               if (window.confirm('Tem certeza? Todos os dados e imagens serão perdidos.')) {
-                await supabase
+                await (supabase as any)
                   .from('proposta_config')
                   .upsert({
                     id: 'config_global',
-                    data: defaultProposalData as unknown as Record<string, unknown>,
+                    data: defaultProposalData,
                     updated_at: new Date().toISOString()
                   });
                 window.location.reload();
