@@ -36,7 +36,7 @@ const ProposalEditor: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const { data: row, error } = await supabase
+        const { data: row, error } = await (supabase as any)
           .from('proposta_config')
           .select('data')
           .eq('id', 'config_global')
@@ -44,14 +44,13 @@ const ProposalEditor: React.FC = () => {
 
         if (error) {
           console.error('Erro ao carregar dados:', error);
-        } else if (row?.data && typeof row.data === 'object' && Object.keys(row.data as object).length > 0) {
-          setData(row.data as unknown as ProposalData);
+        } else if (row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
+          setData(row.data as ProposalData);
         }
       } catch (e) {
         console.error('Erro ao carregar dados:', e);
       } finally {
         setIsLoading(false);
-        // Allow save effects to fire after a short delay
         setTimeout(() => { isInitialLoad.current = false; }, 500);
       }
     };
@@ -71,11 +70,11 @@ const ProposalEditor: React.FC = () => {
     saveTimerRef.current = setTimeout(async () => {
       try {
         setSaveStatus('saving');
-        const { error } = await supabase
+        const { error } = await (supabase as any)
           .from('proposta_config')
           .upsert({
             id: 'config_global',
-            data: data as unknown as Record<string, unknown>,
+            data: data,
             updated_at: new Date().toISOString()
           });
 
