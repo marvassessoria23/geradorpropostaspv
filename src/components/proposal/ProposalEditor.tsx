@@ -297,11 +297,28 @@ const ProposalEditor: React.FC = () => {
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
   const generatePDF = () => {
+    const previewWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
+    const originalTransform = previewWrapper?.style.transform;
+    const originalWidth = previewWrapper?.style.width;
+    const originalTransformOrigin = previewWrapper?.style.transformOrigin;
+
+    if (previewWrapper) {
+      previewWrapper.style.transform = 'none';
+      previewWrapper.style.width = '297mm';
+      previewWrapper.style.transformOrigin = 'unset';
+    }
+
     document.body.classList.add('printing');
+
     setTimeout(() => {
       window.print();
       setTimeout(() => {
         document.body.classList.remove('printing');
+        if (previewWrapper) {
+          previewWrapper.style.transform = originalTransform || '';
+          previewWrapper.style.width = originalWidth || '';
+          previewWrapper.style.transformOrigin = originalTransformOrigin || '';
+        }
       }, 1000);
     }, 300);
   };
