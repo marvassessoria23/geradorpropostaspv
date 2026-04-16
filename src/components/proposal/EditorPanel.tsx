@@ -539,10 +539,19 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
               <Input type="number" value={data.totalAvaliacoes} onChange={(e) => onChange({ totalAvaliacoes: parseInt(e.target.value) || 0 })} className={inputClass} />
             </Field>
             {data.avaliacoes.map((av, i) => (
-              <div key={av.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
+              <div key={av.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12, opacity: av.hidden ? 0.4 : 1 }} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Avaliação {i + 1}</span>
-                  <button onClick={() => removeAvaliacao(av.id)} style={{ color: 'rgba(239,68,68,0.5)' }} className="p-1"><Trash2 size={11} /></button>
+                  <FieldControls
+                    onToggleVisible={() => toggleAvHidden(av.id)}
+                    isVisible={!av.hidden}
+                    onMoveUp={() => moveAv(av.id, -1)}
+                    onMoveDown={() => moveAv(av.id, 1)}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < data.avaliacoes.length - 1}
+                    onDuplicate={() => duplicateAv(av.id)}
+                    onDelete={() => removeAvaliacao(av.id)}
+                  />
                 </div>
                 <Input value={av.nome} onChange={(e) => updateAvaliacao(av.id, "nome", e.target.value)} className={inputClass} placeholder="Nome" />
                 <Input type="number" min="1" max="5" value={av.nota} onChange={(e) => updateAvaliacao(av.id, "nota", parseInt(e.target.value) || 5)} className={inputClass} placeholder="Nota (1-5)" />
