@@ -626,9 +626,10 @@ ${processedSlides.join('\n')}
           </span>
           <button
             onClick={generateHTML}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8, background: 'transparent', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: '1px solid #c9a84c', cursor: 'pointer' }}
+            disabled={isGeneratingHTML}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8, background: 'transparent', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: '1px solid #c9a84c', cursor: isGeneratingHTML ? 'not-allowed' : 'pointer', opacity: isGeneratingHTML ? 0.6 : 1 }}
           >
-            🌐 Gerar HTML
+            🌐 {isGeneratingHTML ? 'Gerando...' : 'Gerar HTML'}
           </button>
           <button
             onClick={generatePDF}
