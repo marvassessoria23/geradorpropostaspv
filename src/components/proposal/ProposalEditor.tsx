@@ -51,11 +51,11 @@ const uploadToStorage = async (id: string, base64: string): Promise<string> => {
 };
 
 // Check if a value is a base64 data URL
-const isBase64 = (val: string | null): val is string =>
+const isBase64 = (val: string | null): boolean =>
   !!val && val.startsWith('data:');
 
 // Check if a value is an old img: reference from the legacy system
-const isImgRef = (val: string | null): val is string =>
+const isImgRef = (val: string | null): boolean =>
   !!val && val.startsWith('img:');
 
 // Check if a value needs migration (base64 or img: ref)
