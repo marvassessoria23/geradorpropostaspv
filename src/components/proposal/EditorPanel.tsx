@@ -406,42 +406,44 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
           </div>
         );
 
-      case "estrategia":
+      case "estrategia": {
+        const estrategiaFields = [
+          { key: 'estrategiaIntro', label: 'Introdução da Estratégia', textarea: true },
+          { key: 'movimento1Title', label: 'Mov. 1 — Título', textarea: false },
+          { key: 'movimento1Intro', label: 'Mov. 1 — Introdução', textarea: true },
+          { key: 'movimento1Item1', label: 'Mov. 1 — Item 1', textarea: true },
+          { key: 'movimento1Item2', label: 'Mov. 1 — Item 2', textarea: true },
+          { key: 'movimento1Item3', label: 'Mov. 1 — Item 3', textarea: true },
+          { key: 'movimento1Resultado', label: 'Mov. 1 — Resultado', textarea: true },
+          { key: 'movimento2Title', label: 'Mov. 2 — Título', textarea: false },
+          { key: 'movimento2Consignacao', label: 'Mov. 2 — Consignação', textarea: true },
+          { key: 'movimento2Obrigacao', label: 'Mov. 2 — Obrigação', textarea: true },
+          { key: 'movimento2Pedidos', label: 'Mov. 2 — Pedidos', textarea: true },
+          { key: 'movimento2Observacoes', label: 'Mov. 2 — Observações', textarea: true },
+          { key: 'movimento3Title', label: 'Mov. 3 — Título', textarea: false },
+          { key: 'movimento3Body', label: 'Mov. 3 — Corpo', textarea: true },
+        ];
         return (
           <div className="space-y-3">
-            <Field label="Introdução da Estratégia"><Textarea value={data.estrategiaIntro} onChange={(e) => onChange({ estrategiaIntro: e.target.value })} className={textareaClass} /></Field>
-            {[1, 2, 3].map((num) => (
-              <div key={num} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
-                <h4 style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Movimento {num}</h4>
-                {num === 1 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento1Title} onChange={(e) => onChange({ movimento1Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Introdução"><Textarea value={data.movimento1Intro} onChange={(e) => onChange({ movimento1Intro: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Item 1"><Textarea value={data.movimento1Item1} onChange={(e) => onChange({ movimento1Item1: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Item 2"><Textarea value={data.movimento1Item2} onChange={(e) => onChange({ movimento1Item2: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Item 3"><Textarea value={data.movimento1Item3} onChange={(e) => onChange({ movimento1Item3: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Resultado"><Textarea value={data.movimento1Resultado} onChange={(e) => onChange({ movimento1Resultado: e.target.value })} className={textareaClass} rows={2} /></Field>
-                  </>
-                )}
-                {num === 2 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento2Title} onChange={(e) => onChange({ movimento2Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Consignação"><Textarea value={data.movimento2Consignacao} onChange={(e) => onChange({ movimento2Consignacao: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Obrigação"><Textarea value={data.movimento2Obrigacao} onChange={(e) => onChange({ movimento2Obrigacao: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Pedidos"><Textarea value={data.movimento2Pedidos} onChange={(e) => onChange({ movimento2Pedidos: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Observações"><Textarea value={data.movimento2Observacoes} onChange={(e) => onChange({ movimento2Observacoes: e.target.value })} className={textareaClass} /></Field>
-                  </>
-                )}
-                {num === 3 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento3Title} onChange={(e) => onChange({ movimento3Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Corpo"><Textarea value={data.movimento3Body} onChange={(e) => onChange({ movimento3Body: e.target.value })} className={textareaClass} rows={3} /></Field>
-                  </>
+            {estrategiaFields.map((f) => (
+              <div key={f.key} style={{ opacity: isFieldHidden(f.key) ? 0.4 : 1 }}>
+                <div className="flex items-center justify-between mb-1">
+                  <Label style={{ fontSize: 10, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: "'Lato', sans-serif" }}>{f.label}</Label>
+                  <FieldControls
+                    onToggleVisible={() => toggleFieldHidden(f.key)}
+                    isVisible={!isFieldHidden(f.key)}
+                  />
+                </div>
+                {f.textarea ? (
+                  <Textarea value={(data as any)[f.key]} onChange={(e) => onChange({ [f.key]: e.target.value })} className={textareaClass} rows={3} />
+                ) : (
+                  <Input value={(data as any)[f.key]} onChange={(e) => onChange({ [f.key]: e.target.value })} className={inputClass} />
                 )}
               </div>
             ))}
           </div>
         );
+      }
 
       case "argumentos":
         return (
