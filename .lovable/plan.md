@@ -1,45 +1,36 @@
 
 
-# Migrar Imagens para Supabase Storage
+# Fix PDF Generation — Print CSS & Logic
 
-## Diagnóstico
-A tabela `proposta_imagens` tem 12 fotos (~12MB cada, ~144MB total). Queries individuais de ~12MB ainda dão timeout. O salvamento também falha silenciosamente. Resultado: ao recarregar, todas as fotos somem.
+## Problem
+The `print-area` class is on a deeply nested div, but the CSS rule `body > *:not(.print-area)` only targets direct children of `<body>`. Since `print-area` is inside multiple wrapper divs, it gets hidden along with everything else → blank PDF.
 
-## Solução
-Substituir todo o sistema de base64-no-banco por Supabase Storage. Imagens viram URLs públicas permanentes salvas diretamente no JSON da `proposta_config`.
+## Solution
 
-## Alterações
-
-### 1. Migration SQL — Criar bucket de Storage
-```sql
-INSERT INTO storage.buckets (id, name, public) VALUES ('proposta-imagens', 'proposta-imagens', true);
--- RLS policies para permitir upload/read/update/delete público
+### 1. `ProposalEditor.tsx` — Update `generatePDF`
+```typescript
+const generatePDF = () => {
+  document.body.classList.add('printing');
+  setTimeout(() => {
+    window.print();
+    document.body.classList.remove('printing');
+  }, 500);
+};
 ```
 
-### 2. `ProposalEditor.tsx` — Reescrever lógica de imagens
-- Remover funções `saveImage`, `deleteImage`, `loadImage`, `loadImageIds`, `sanitizeForSave`, `extractImages`, `rehydrateWithImages`
-- Remover `prevImagesRef`, `saveImagesImmediately`
-- Adicionar função `uploadToStorage(id, base64) → publicUrl` que converte base64 para blob e faz upload via `supabase.storage.from('proposta-imagens').upload()`
-- Expor `uploadToStorage` para o `EditorPanel` via prop ou callback no `updateData`
-- No auto-save debounced, salvar apenas o JSON (que agora contém URLs, não base64)
-- No load, simplesmente usar os dados do JSON — URLs públicas carregam sozinhas pelo navegador
+### 2. `index.css` — Replace entire `@media print` block
+Replace lines 243–297 with the user's provided CSS that uses `body.printing` as the selector scope:
+- `body.printing > *` hides everything
+- `body.printing .print-area` shows only the slides container
+- `body.printing .proposal-page` formats each slide as A4 landscape page
+- `body.printing .preview-wrapper` removes scale transforms
+- Add `color-adjust: exact !important` for full browser coverage
+- Keep `@page { size: A4 landscape; margin: 0mm; }`
 
-### 3. `EditorPanel.tsx` — Upload imediato ao selecionar imagem
-- No `ImageUploadField.onUpload`, chamar `uploadToStorage` antes de atualizar o estado
-- Mostrar feedback de loading durante upload
-- O estado recebe a URL pública, não o base64
+### 3. No structural changes needed
+The `print-area` class is already on the correct container (line 342). The `no-print` class on the editor panel will be redundant but harmless.
 
-### 4. Migrar imagens existentes (one-time)
-- Adicionar lógica no load que detecta se algum campo tem `img:` reference ou base64 inline
-- Se encontrar, fazer upload para Storage e substituir no estado
-- Isso garante que as 12 fotos existentes no banco sejam migradas automaticamente
-
-### 5. Cleanup
-- Remover `beforeunload` backup de localStorage (não precisa mais, JSON é leve)
-- A tabela `proposta_imagens` pode ser ignorada/removida depois
-
-## Arquivos Modificados
-- Migration SQL (criar bucket + policies)
-- `src/components/proposal/ProposalEditor.tsx` — nova lógica Storage
-- `src/components/proposal/EditorPanel.tsx` — upload assíncrono com feedback
+## Files Modified
+- `src/components/proposal/ProposalEditor.tsx` — `generatePDF` function (3 lines)
+- `src/index.css` — `@media print` block replacement
 
