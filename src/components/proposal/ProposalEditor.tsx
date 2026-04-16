@@ -272,25 +272,25 @@ const ProposalEditor: React.FC = () => {
   const renderPage = (pageType: PageType, pageNumber: number, bgColor: string) => {
     switch (pageType) {
       case "cover":
-        return <PageCover data={data} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageCover data={data} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "diagnostico":
-        return <PageDiagnostico data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageDiagnostico data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "estrategia":
-        return <PageEstrategia data={data} textSizeClass={textSizeClass} startPageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageEstrategia data={data} textSizeClass={textSizeClass} startPageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "argumentos":
-        return <PageArgumentos data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageArgumentos data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "sobre":
-        return <PageSobre data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageSobre data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "equipe":
-        return <PageEquipe data={data} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageEquipe data={data} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "avaliacoes":
-        return <PageAvaliacoes data={data} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageAvaliacoes data={data} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "investimento":
-        return <PageInvestimento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageInvestimento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "fechamento":
-        return <PageFechamento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageFechamento data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       case "contato":
-        return <PageContato data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} />;
+        return <PageContato data={data} textSizeClass={textSizeClass} pageNumber={pageNumber} bgColor={bgColor} onChange={updateData} />;
       default:
         return null;
     }
