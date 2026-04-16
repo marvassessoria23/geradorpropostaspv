@@ -230,6 +230,50 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
     onChange({ avaliacoes: data.avaliacoes.filter((a) => a.id !== id) });
   };
 
+  const toggleAvHidden = (id: string) => {
+    onChange({ avaliacoes: data.avaliacoes.map((a) => (a.id === id ? { ...a, hidden: !a.hidden } : a)) });
+  };
+
+  const moveAv = (id: string, dir: -1 | 1) => {
+    const idx = data.avaliacoes.findIndex((a) => a.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.avaliacoes.length) return;
+    const arr = [...data.avaliacoes];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ avaliacoes: arr });
+  };
+
+  const duplicateAv = (id: string) => {
+    const idx = data.avaliacoes.findIndex((a) => a.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.avaliacoes[idx], id: Date.now().toString() };
+    const arr = [...data.avaliacoes];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ avaliacoes: arr });
+  };
+
+  const toggleMemberHidden = (id: string) => {
+    onChange({ team: data.team.map((m) => (m.id === id ? { ...m, hidden: !m.hidden } : m)) });
+  };
+
+  const moveMember = (id: string, dir: -1 | 1) => {
+    const idx = data.team.findIndex((m) => m.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.team.length) return;
+    const arr = [...data.team];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ team: arr });
+  };
+
+  const duplicateMember = (id: string) => {
+    const idx = data.team.findIndex((m) => m.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.team[idx], id: Date.now().toString() };
+    const arr = [...data.team];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ team: arr });
+  };
+
   const pageManagementBar = (page: ProposalPage, index: number) => (
     <div className="flex items-center gap-0.5 ml-auto" onClick={(e) => e.stopPropagation()}>
       <button onClick={() => togglePageVisibility(page.id)} className="p-1 rounded hover:bg-[rgba(201,168,76,0.15)] transition-colors" style={{ color: 'rgba(255,255,255,0.5)' }} title={page.visible ? "Ocultar" : "Mostrar"}>
