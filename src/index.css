@@ -244,54 +244,60 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
-  body > *:not(.print-area) {
+  body.printing > * {
     display: none !important;
   }
 
-  .print-area {
+  body.printing .print-area {
     display: block !important;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    z-index: 99999 !important;
+    background: white !important;
   }
 
-  .preview-wrapper {
+  body.printing .proposal-page {
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: unset !important;
+    max-height: 210mm !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    transform: none !important;
+    margin: 0 !important;
+    padding: 40px 56px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+  }
+
+  body.printing .proposal-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  body.printing .preview-wrapper,
+  body.printing .preview-container,
+  body.printing [class*="preview"] {
     transform: none !important;
     width: 100% !important;
-  }
-
-  .slide-shadow {
-    box-shadow: none !important;
-  }
-
-  .proposal-page {
-    width: 297mm;
-    height: 210mm;
-    page-break-after: always;
-    break-after: page;
-    overflow: hidden;
-    transform: none !important;
-    margin: 0;
-    padding: 40px 56px;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .proposal-page:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
-  }
-
-  .no-print {
-    display: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
   }
 
   @page {
     size: A4 landscape;
-    margin: 0;
+    margin: 0mm;
   }
 }
