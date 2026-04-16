@@ -1,23 +1,45 @@
 
 
-# Fix 3 Issues: Cover White Line, Photo Slider, Team Photos
+# Migrar Imagens para Supabase Storage
 
-## Problem 1 — White Line on Cover
-Fix only in `PageCover.tsx` — do NOT touch `.slide` overflow in `index.css`.
-- Add `overflow: 'hidden'` only on the cover slide's root div
-- Remove any border/outline/gap between the two flex children
-- Widen the gradient overlay on the photo side to blend seamlessly into the dark background
+## Diagnóstico
+A tabela `proposta_imagens` tem 12 fotos (~12MB cada, ~144MB total). Queries individuais de ~12MB ainda dão timeout. O salvamento também falha silenciosamente. Resultado: ao recarregar, todas as fotos somem.
 
-## Problem 2 — Cover Photo Position Slider
-Verify wiring is solid in `PageCover.tsx` — the `coverPhotoPosition` prop should map to `objectPosition: center ${coverPhotoPosition}%`. Quick check and fix if needed.
+## Solução
+Substituir todo o sistema de base64-no-banco por Supabase Storage. Imagens viram URLs públicas permanentes salvas diretamente no JSON da `proposta_config`.
 
-## Problem 3 — Team Photos Too Small and Distorted
-In `PageEquipe.tsx`:
-- Increase `MemberCircle` photo from 80×80 to 100×100
-- Add `objectPosition: 'center 20%'` on `<img>` to focus on faces
-- Replace CSS grid with `display: flex`, `flexWrap: wrap`, gap `16px 20px`, `justifyContent: flex-start`
+## Alterações
 
-## Files Modified
-- `src/components/proposal/PageCover.tsx`
-- `src/components/proposal/PageEquipe.tsx`
+### 1. Migration SQL — Criar bucket de Storage
+```sql
+INSERT INTO storage.buckets (id, name, public) VALUES ('proposta-imagens', 'proposta-imagens', true);
+-- RLS policies para permitir upload/read/update/delete público
+```
+
+### 2. `ProposalEditor.tsx` — Reescrever lógica de imagens
+- Remover funções `saveImage`, `deleteImage`, `loadImage`, `loadImageIds`, `sanitizeForSave`, `extractImages`, `rehydrateWithImages`
+- Remover `prevImagesRef`, `saveImagesImmediately`
+- Adicionar função `uploadToStorage(id, base64) → publicUrl` que converte base64 para blob e faz upload via `supabase.storage.from('proposta-imagens').upload()`
+- Expor `uploadToStorage` para o `EditorPanel` via prop ou callback no `updateData`
+- No auto-save debounced, salvar apenas o JSON (que agora contém URLs, não base64)
+- No load, simplesmente usar os dados do JSON — URLs públicas carregam sozinhas pelo navegador
+
+### 3. `EditorPanel.tsx` — Upload imediato ao selecionar imagem
+- No `ImageUploadField.onUpload`, chamar `uploadToStorage` antes de atualizar o estado
+- Mostrar feedback de loading durante upload
+- O estado recebe a URL pública, não o base64
+
+### 4. Migrar imagens existentes (one-time)
+- Adicionar lógica no load que detecta se algum campo tem `img:` reference ou base64 inline
+- Se encontrar, fazer upload para Storage e substituir no estado
+- Isso garante que as 12 fotos existentes no banco sejam migradas automaticamente
+
+### 5. Cleanup
+- Remover `beforeunload` backup de localStorage (não precisa mais, JSON é leve)
+- A tabela `proposta_imagens` pode ser ignorada/removida depois
+
+## Arquivos Modificados
+- Migration SQL (criar bucket + policies)
+- `src/components/proposal/ProposalEditor.tsx` — nova lógica Storage
+- `src/components/proposal/EditorPanel.tsx` — upload assíncrono com feedback
 
