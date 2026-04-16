@@ -306,6 +306,12 @@ const ProposalEditor: React.FC = () => {
       await document.fonts.ready;
       await new Promise((r) => setTimeout(r, 500));
 
+      const A4_W_MM = 297;
+      const A4_H_MM = 210;
+      const SLIDE_W = 1280;
+      const SLIDE_H = 720;
+      const MM_PER_PX = A4_W_MM / SLIDE_W;
+
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -321,40 +327,79 @@ const ProposalEditor: React.FC = () => {
         return;
       }
 
+      let firstPage = true;
+
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
 
-        const dataUrl = await toPng(slide, {
-          width: 1280,
-          height: 720,
-          style: {
-            transform: 'none',
-            transformOrigin: 'top left',
-            width: '1280px',
-            height: '720px',
-            minHeight: '720px',
-            maxHeight: '720px',
-            overflow: 'hidden',
-            position: 'relative',
-          },
-          pixelRatio: 1.5,
-          skipFonts: false,
-          fetchRequestInit: {
-            mode: 'cors' as RequestMode,
-            cache: 'no-cache' as RequestCache,
-          },
-          filter: (node: HTMLElement) => {
-            if (!node) return true;
-            if (node.tagName === 'BUTTON') return false;
-            if (node.classList?.contains?.('slide-controls')) return false;
-            if (node.classList?.contains?.('slide-hover-controls')) return false;
-            if (node.getAttribute?.('data-pdf-exclude') === 'true') return false;
-            return true;
-          },
+        // Save original inline styles
+        const saved = {
+          width: slide.style.width,
+          height: slide.style.height,
+          minHeight: slide.style.minHeight,
+          maxHeight: slide.style.maxHeight,
+          overflow: slide.style.overflow,
+          transform: slide.style.transform,
+          transformOrigin: slide.style.transformOrigin,
+          position: slide.style.position,
+        };
+
+        // Force natural-height capture (no clipping)
+        Object.assign(slide.style, {
+          width: `${SLIDE_W}px`,
+          height: 'auto',
+          minHeight: `${SLIDE_H}px`,
+          maxHeight: 'none',
+          overflow: 'visible',
+          transform: 'none',
+          transformOrigin: 'top left',
+          position: 'relative',
         });
 
-        if (i > 0) pdf.addPage('a4', 'landscape');
-        pdf.addImage(dataUrl, 'PNG', 0, 0, 297, 210);
+        // Allow layout to settle
+        await new Promise((r) => setTimeout(r, 80));
+
+        const naturalHeight = Math.max(slide.scrollHeight, SLIDE_H);
+
+        let dataUrl = '';
+        try {
+          dataUrl = await toPng(slide, {
+            width: SLIDE_W,
+            height: naturalHeight,
+            pixelRatio: 1.5,
+            cacheBust: true,
+            skipFonts: false,
+            fetchRequestInit: {
+              mode: 'cors' as RequestMode,
+              cache: 'no-cache' as RequestCache,
+            },
+            filter: (node: HTMLElement) => {
+              if (!node) return true;
+              if (node.tagName === 'BUTTON') return false;
+              if (node.classList?.contains?.('slide-controls')) return false;
+              if (node.classList?.contains?.('slide-hover-controls')) return false;
+              if (node.getAttribute?.('data-pdf-exclude') === 'true') return false;
+              return true;
+            },
+          });
+        } catch (slideError) {
+          console.error(`Erro no slide ${i + 1}:`, slideError);
+        }
+
+        // Restore original styles
+        Object.assign(slide.style, saved);
+
+        if (!dataUrl) continue;
+
+        const totalHeightMm = naturalHeight * MM_PER_PX;
+        const numPages = Math.ceil(naturalHeight / SLIDE_H);
+
+        for (let p = 0; p < numPages; p++) {
+          if (!firstPage) pdf.addPage('a4', 'landscape');
+          firstPage = false;
+          const yOffsetMm = -p * A4_H_MM;
+          pdf.addImage(dataUrl, 'PNG', 0, yOffsetMm, A4_W_MM, totalHeightMm);
+        }
       }
 
       pdf.save('proposta.pdf');
