@@ -300,8 +300,10 @@ const ProposalEditor: React.FC = () => {
     document.body.classList.add('printing');
     setTimeout(() => {
       window.print();
-      document.body.classList.remove('printing');
-    }, 500);
+      setTimeout(() => {
+        document.body.classList.remove('printing');
+      }, 1000);
+    }, 300);
   };
 
   if (isLoading) {
