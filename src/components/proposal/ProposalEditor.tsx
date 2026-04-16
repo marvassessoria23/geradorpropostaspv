@@ -111,6 +111,7 @@ const ProposalEditor: React.FC = () => {
   const [hoveredSlide, setHoveredSlide] = useState<string | null>(null);
   const [showTip, setShowTip] = useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingHTML, setIsGeneratingHTML] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
