@@ -357,10 +357,12 @@ const ProposalEditor: React.FC = () => {
           position: 'relative',
         });
 
-        // Allow layout to settle
-        await new Promise((r) => setTimeout(r, 80));
+        // Allow layout to settle (longer wait + 2x rAF for heavy slides)
+        await new Promise((r) => setTimeout(r, 150));
+        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
-        const naturalHeight = Math.max(slide.scrollHeight, SLIDE_H);
+        const rectH = slide.getBoundingClientRect().height;
+        const naturalHeight = Math.ceil(Math.max(slide.scrollHeight, rectH, SLIDE_H));
 
         let dataUrl = '';
         try {
