@@ -1,67 +1,65 @@
 
 
-# Inline Editing + Field Controls for All Slides
+# Fix Empty Fields, Add FieldControls to Estratégia, Add Slide Hide Button
 
-## Scope
-Add two features without touching persistence, image upload, PDF generation, or print CSS.
+## Problem Summary
+1. Empty fields in PageEstrategia (and other pages) render as blank space instead of being hidden
+2. Estratégia section in EditorPanel has no FieldControls (no hide/delete/move/duplicate)
+3. No way to hide slides directly from the preview
 
-## What Changes
+## Changes
 
-### 1. New Component: `InlineEditable.tsx`
-Reusable `contentEditable` wrapper. Props: `value`, `onChange`, `className`, `style`, `multiline`, `tag`. Shows gold outline on focus, dashed outline on hover. Syncs with panel via shared `data` state.
+### 1. All Page Components — Hide Empty Fields
+Wrap every `InlineEditable` and text element with a conditional check: only render if the value is non-empty (`value && value.trim() !== ''`). Apply to all 10 page components.
 
-### 2. New Component: `FieldControls.tsx`
-Toolbar with visibility toggle, move up/down, duplicate, delete buttons. Used only for dynamic array items (argumentos, team members, avaliacoes, fechamento steps). Fixed fields (titles, paragraphs) do not get controls — they are always visible and editable inline.
+Example pattern:
+```tsx
+{data.movimento1Title && data.movimento1Title.trim() !== '' && (
+  <div style={{ background: '...' }}>
+    <InlineEditable tag="h3" value={data.movimento1Title} ... />
+  </div>
+)}
+```
 
-### 3. Types Update (`types.ts`)
-Add `hidden?: boolean` to `ArgumentRow`, `Avaliacao`, `TeamMember`. No changes to `ProposalData` structure or `ProposalPage`.
+Files: `PageEstrategia.tsx`, `PageDiagnostico.tsx`, `PageCover.tsx`, `PageSobre.tsx`, `PageArgumentos.tsx`, `PageEquipe.tsx`, `PageAvaliacoes.tsx`, `PageInvestimento.tsx`, `PageFechamento.tsx`, `PageContato.tsx`
 
-### 4. Update All 10 Page Components
-Each page component receives an `onChange` prop (same `(updates: Partial<ProposalData>) => void` from ProposalEditor). Replace static `{data.fieldName}` text renders with `<InlineEditable value={data.fieldName} onChange={(v) => onChange({ fieldName: v })} />` preserving all existing styles. Array items check `!item.hidden` before rendering.
+### 2. EditorPanel — Add FieldControls to Estratégia Fields
+Currently the estratégia section just renders 3 hardcoded movement blocks with no controls. Add:
+- **FieldControls** (hide/show toggle) on each field within movimentos (title, intro, items, resultado, consignação, etc.)
+- Track hidden state using a new `hiddenFields: Record<string, boolean>` in `ProposalData`
+- Each field key like `movimento1Title`, `movimento1Intro`, etc. can be toggled
+- In the preview, check `!data.hiddenFields?.[fieldKey]` before rendering
 
-Pages affected:
-- **PageCover** — clientName, nomeEscritorio, subtituloEscritorio
-- **PageDiagnostico** — diagnosticoTitle, diagnosticoGreeting, diagnosticoIntro, diagnosticoBody, diagnosticoJurisprudencia, diagnosticoConclusao
-- **PageEstrategia** — estrategiaIntro, all movimento fields
-- **PageArgumentos** — each row's argumento, fundamento, observacao
-- **PageSobre** — sobreTitle, sobreText1/2/3
-- **PageEquipe** — member name, role (within MemberCircle)
-- **PageAvaliacoes** — av.nome, av.texto
-- **PageInvestimento** — all honorario fields, parcelamento, validadeProposta
-- **PageFechamento** — each step text, fechamentoCTA
-- **PageContato** — telefone, instagram, social fields, contatoTexto, contatoSlogan
+Also add FieldControls to **fechamento steps** (move up/down, duplicate, delete — already has add/remove but missing reorder and duplicate).
 
-### 5. Update `ProposalEditor.tsx`
-Pass `onChange={updateData}` to every page component. No changes to save logic, image logic, or PDF logic.
+### 3. ProposalEditor — Slide Hide Button on Preview Hover
+Add a floating button on each slide wrapper in the preview that appears on hover:
+- Button in top-right corner with opacity 0, shown on parent hover
+- Clicking toggles `page.visible`
+- Hidden slides are filtered from preview (already done via `visiblePages`)
+- Add CSS `.slide-wrapper:hover .slide-controls { opacity: 1 }` to `index.css`
 
-### 6. CSS Addition (`index.css`)
-Add hover/focus styles for `[contenteditable]` elements. Exclude from print with `body.printing [contenteditable]` reset.
-
-### 7. Tooltip on First Load
-Show a dismissable tip "Clique em qualquer texto no preview para editar" for 5 seconds on mount.
+### 4. Types Update
+Add to `ProposalData`:
+```typescript
+hiddenFields?: Record<string, boolean>;
+```
 
 ## Files Modified
-- `src/components/proposal/types.ts` — add `hidden?` to interfaces
-- `src/components/proposal/InlineEditable.tsx` — new
-- `src/components/proposal/FieldControls.tsx` — new
-- `src/components/proposal/PageCover.tsx` — inline editable
-- `src/components/proposal/PageDiagnostico.tsx` — inline editable
-- `src/components/proposal/PageEstrategia.tsx` — inline editable
-- `src/components/proposal/PageArgumentos.tsx` — inline editable + hidden filter
-- `src/components/proposal/PageSobre.tsx` — inline editable
-- `src/components/proposal/PageEquipe.tsx` — inline editable + hidden filter
-- `src/components/proposal/PageAvaliacoes.tsx` — inline editable + hidden filter
-- `src/components/proposal/PageInvestimento.tsx` — inline editable
-- `src/components/proposal/PageFechamento.tsx` — inline editable + hidden filter
-- `src/components/proposal/PageContato.tsx` — inline editable
-- `src/components/proposal/ProposalEditor.tsx` — pass onChange to pages, add tooltip
-- `src/components/proposal/EditorPanel.tsx` — add FieldControls to array items
-- `src/index.css` — contenteditable hover/focus styles
+- `src/components/proposal/types.ts` — add `hiddenFields`
+- `src/components/proposal/ProposalEditor.tsx` — slide hover controls
+- `src/components/proposal/EditorPanel.tsx` — FieldControls for estratégia fields + fechamento steps reorder
+- `src/components/proposal/PageEstrategia.tsx` — empty field guards + hiddenFields check
+- `src/components/proposal/PageDiagnostico.tsx` — empty field guards
+- `src/components/proposal/PageCover.tsx` — empty field guards
+- `src/components/proposal/PageSobre.tsx` — empty field guards
+- `src/components/proposal/PageArgumentos.tsx` — empty field guards
+- `src/components/proposal/PageAvaliacoes.tsx` — empty field guards
+- `src/components/proposal/PageInvestimento.tsx` — empty field guards
+- `src/components/proposal/PageFechamento.tsx` — empty field guards + step reorder
+- `src/components/proposal/PageContato.tsx` — empty field guards
+- `src/index.css` — `.slide-wrapper:hover .slide-controls` rule
 
 ## NOT Modified
-- Save/load logic in ProposalEditor
-- Image upload to Storage
-- PDF generation (`generatePDF`)
-- Print CSS (`@media print`)
-- `supabase/` anything
+- Save/load logic, image upload, PDF generation, print CSS
 
