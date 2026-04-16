@@ -182,6 +182,28 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
     onChange({ argumentos: data.argumentos.filter((a) => a.id !== id) });
   };
 
+  const toggleArgHidden = (id: string) => {
+    onChange({ argumentos: data.argumentos.map((a) => (a.id === id ? { ...a, hidden: !a.hidden } : a)) });
+  };
+
+  const moveArg = (id: string, dir: -1 | 1) => {
+    const idx = data.argumentos.findIndex((a) => a.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.argumentos.length) return;
+    const arr = [...data.argumentos];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ argumentos: arr });
+  };
+
+  const duplicateArg = (id: string) => {
+    const idx = data.argumentos.findIndex((a) => a.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.argumentos[idx], id: Date.now().toString() };
+    const arr = [...data.argumentos];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ argumentos: arr });
+  };
+
   const updateStep = (index: number, value: string) => {
     const steps = [...data.fechamentoSteps];
     steps[index] = value;
