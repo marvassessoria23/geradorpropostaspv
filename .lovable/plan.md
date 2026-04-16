@@ -1,65 +1,84 @@
 
 
-# Fix Empty Fields, Add FieldControls to Estratégia, Add Slide Hide Button
+# Fix Blank Slides + Slide Hide Button + Hidden Slide Indicators
 
 ## Problem Summary
-1. Empty fields in PageEstrategia (and other pages) render as blank space instead of being hidden
-2. Estratégia section in EditorPanel has no FieldControls (no hide/delete/move/duplicate)
-3. No way to hide slides directly from the preview
+1. Slides with all empty/hidden fields still render as blank white rectangles
+2. The hover "hide slide" button exists in code but doesn't work (CSS `opacity:0` on a child inside a scaled container may not trigger hover correctly)
+3. Hidden slides in the left panel need clearer visual indication
 
 ## Changes
 
-### 1. All Page Components — Hide Empty Fields
-Wrap every `InlineEditable` and text element with a conditional check: only render if the value is non-empty (`value && value.trim() !== ''`). Apply to all 10 page components.
+### 1. Auto-hide slides with no visible content (`ProposalEditor.tsx`)
+Add a `slideHasContent(page, data)` function that checks each page type's fields. If all fields are empty or hidden, the slide is excluded from `visiblePages`.
 
-Example pattern:
-```tsx
-{data.movimento1Title && data.movimento1Title.trim() !== '' && (
-  <div style={{ background: '...' }}>
-    <InlineEditable tag="h3" value={data.movimento1Title} ... />
-  </div>
-)}
-```
-
-Files: `PageEstrategia.tsx`, `PageDiagnostico.tsx`, `PageCover.tsx`, `PageSobre.tsx`, `PageArgumentos.tsx`, `PageEquipe.tsx`, `PageAvaliacoes.tsx`, `PageInvestimento.tsx`, `PageFechamento.tsx`, `PageContato.tsx`
-
-### 2. EditorPanel — Add FieldControls to Estratégia Fields
-Currently the estratégia section just renders 3 hardcoded movement blocks with no controls. Add:
-- **FieldControls** (hide/show toggle) on each field within movimentos (title, intro, items, resultado, consignação, etc.)
-- Track hidden state using a new `hiddenFields: Record<string, boolean>` in `ProposalData`
-- Each field key like `movimento1Title`, `movimento1Intro`, etc. can be toggled
-- In the preview, check `!data.hiddenFields?.[fieldKey]` before rendering
-
-Also add FieldControls to **fechamento steps** (move up/down, duplicate, delete — already has add/remove but missing reorder and duplicate).
-
-### 3. ProposalEditor — Slide Hide Button on Preview Hover
-Add a floating button on each slide wrapper in the preview that appears on hover:
-- Button in top-right corner with opacity 0, shown on parent hover
-- Clicking toggles `page.visible`
-- Hidden slides are filtered from preview (already done via `visiblePages`)
-- Add CSS `.slide-wrapper:hover .slide-controls { opacity: 1 }` to `index.css`
-
-### 4. Types Update
-Add to `ProposalData`:
 ```typescript
-hiddenFields?: Record<string, boolean>;
+const slideHasContent = (page: ProposalPage, data: ProposalData): boolean => {
+  const hf = data.hiddenFields || {};
+  const v = (key: string) => {
+    const val = (data as any)[key];
+    return val && String(val).trim() !== '' && !hf[key];
+  };
+  switch (page.type) {
+    case 'estrategia':
+      return v('estrategiaIntro') || v('movimento1Title') || v('movimento1Intro') || 
+             v('movimento1Item1') || v('movimento1Item2') || v('movimento1Item3') || 
+             v('movimento1Resultado') || v('movimento2Title') || v('movimento2Consignacao') || 
+             v('movimento2Obrigacao') || v('movimento2Pedidos') || v('movimento2Observacoes') || 
+             v('movimento3Title') || v('movimento3Body');
+    case 'cover': return true; // cover always shows
+    case 'diagnostico':
+      return v('diagnosticoTitle') || v('diagnosticoGreeting') || v('diagnosticoIntro') || 
+             v('diagnosticoBody') || v('diagnosticoJurisprudencia') || v('diagnosticoConclusao');
+    // ... similar for all other page types
+    default: return true;
+  }
+};
+
+// Update visiblePages filter:
+const visiblePages = data.pages.filter(p => p.visible && slideHasContent(p, data));
 ```
+
+### 2. Fix slide hide button visibility (`ProposalEditor.tsx`)
+Replace the CSS-only hover approach with React state (`hoveredSlide`). Use `onMouseEnter`/`onMouseLeave` on each slide wrapper to track which slide is hovered, then conditionally render the button.
+
+```tsx
+const [hoveredSlide, setHoveredSlide] = useState<string | null>(null);
+
+// On each slide wrapper:
+<div
+  className="slide-wrapper"
+  onMouseEnter={() => setHoveredSlide(page.id)}
+  onMouseLeave={() => setHoveredSlide(null)}
+  style={{ position: 'relative', ... }}
+>
+  {hoveredSlide === page.id && (
+    <div style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
+      <button onClick={(e) => { e.stopPropagation(); togglePageVisibility(page.id); }}
+        style={{ background: 'rgba(13,43,69,0.9)', border: '1px solid #c9a84c', color: '#c9a84c', ... }}>
+        🙈 Ocultar slide
+      </button>
+    </div>
+  )}
+  {slideContent}
+</div>
+```
+
+Add `togglePageVisibility` helper that toggles `page.visible`.
+
+### 3. Enhanced hidden slide indicators in left panel (`EditorPanel.tsx`)
+Already partially done (line 739 has opacity-30 + line-through). Enhance with:
+- Red "OCULTO" label next to hidden slide names
+- Reduced opacity on the whole row
+- Slight red tint background
+
+### 4. CSS cleanup (`index.css`)
+Remove the `.slide-wrapper:hover .slide-controls` rule (replaced by React state approach). Keep `[contenteditable]` styles untouched.
 
 ## Files Modified
-- `src/components/proposal/types.ts` — add `hiddenFields`
-- `src/components/proposal/ProposalEditor.tsx` — slide hover controls
-- `src/components/proposal/EditorPanel.tsx` — FieldControls for estratégia fields + fechamento steps reorder
-- `src/components/proposal/PageEstrategia.tsx` — empty field guards + hiddenFields check
-- `src/components/proposal/PageDiagnostico.tsx` — empty field guards
-- `src/components/proposal/PageCover.tsx` — empty field guards
-- `src/components/proposal/PageSobre.tsx` — empty field guards
-- `src/components/proposal/PageArgumentos.tsx` — empty field guards
-- `src/components/proposal/PageAvaliacoes.tsx` — empty field guards
-- `src/components/proposal/PageInvestimento.tsx` — empty field guards
-- `src/components/proposal/PageFechamento.tsx` — empty field guards + step reorder
-- `src/components/proposal/PageContato.tsx` — empty field guards
-- `src/index.css` — `.slide-wrapper:hover .slide-controls` rule
+- `src/components/proposal/ProposalEditor.tsx` — `slideHasContent` function, `hoveredSlide` state, toggle button fix
+- `src/components/proposal/EditorPanel.tsx` — enhanced hidden slide indicators
+- `src/index.css` — remove unused `.slide-controls` hover rule
 
 ## NOT Modified
-- Save/load logic, image upload, PDF generation, print CSS
-
+- Save/load logic, image upload, PDF generation, print CSS, page components
