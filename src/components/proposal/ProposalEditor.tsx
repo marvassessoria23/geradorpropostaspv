@@ -312,6 +312,7 @@ const ProposalEditor: React.FC = () => {
       const SLIDE_W = 1280;
       const SLIDE_H = 720;
       const MM_PER_PX = A4_W_MM / SLIDE_W;
+      const OVERFLOW_TOLERANCE_PX = 24;
 
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -332,6 +333,11 @@ const ProposalEditor: React.FC = () => {
 
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
+        const originalRectHeight = Math.ceil(slide.getBoundingClientRect().height);
+        const originalComputedStyle = window.getComputedStyle(slide);
+        const wasFixedSlide =
+          (originalComputedStyle.overflow === 'hidden' || originalComputedStyle.overflowY === 'hidden') &&
+          Math.abs(originalRectHeight - SLIDE_H) <= 4;
 
         // Save original inline styles
         const saved = {
@@ -362,7 +368,11 @@ const ProposalEditor: React.FC = () => {
         await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
         const rectH = slide.getBoundingClientRect().height;
-        const naturalHeight = Math.ceil(Math.max(slide.scrollHeight, rectH, SLIDE_H));
+        const measuredHeight = Math.ceil(Math.max(slide.scrollHeight, rectH, SLIDE_H));
+        const overflowPx = measuredHeight - SLIDE_H;
+        const naturalHeight = wasFixedSlide && overflowPx <= OVERFLOW_TOLERANCE_PX
+          ? SLIDE_H
+          : measuredHeight;
 
         let dataUrl = '';
         try {
@@ -395,7 +405,7 @@ const ProposalEditor: React.FC = () => {
         if (!dataUrl) continue;
 
         const totalHeightMm = naturalHeight * MM_PER_PX;
-        const numPages = Math.ceil(naturalHeight / SLIDE_H);
+        const numPages = Math.max(1, Math.ceil((naturalHeight - 1) / SLIDE_H));
 
         for (let p = 0; p < numPages; p++) {
           if (!firstPage) pdf.addPage('a4', 'landscape');
