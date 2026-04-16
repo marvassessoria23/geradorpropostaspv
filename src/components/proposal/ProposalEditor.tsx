@@ -297,11 +297,28 @@ const ProposalEditor: React.FC = () => {
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
   const generatePDF = () => {
+    const previewWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
+    const originalTransform = previewWrapper?.style.transform;
+    const originalWidth = previewWrapper?.style.width;
+    const originalTransformOrigin = previewWrapper?.style.transformOrigin;
+
+    if (previewWrapper) {
+      previewWrapper.style.transform = 'none';
+      previewWrapper.style.width = '297mm';
+      previewWrapper.style.transformOrigin = 'unset';
+    }
+
     document.body.classList.add('printing');
+
     setTimeout(() => {
       window.print();
       setTimeout(() => {
         document.body.classList.remove('printing');
+        if (previewWrapper) {
+          previewWrapper.style.transform = originalTransform || '';
+          previewWrapper.style.width = originalWidth || '';
+          previewWrapper.style.transformOrigin = originalTransformOrigin || '';
+        }
       }, 1000);
     }, 300);
   };
@@ -398,7 +415,7 @@ const ProposalEditor: React.FC = () => {
         <div ref={containerRef} className="print-area" style={{ flex: 1, overflowY: 'auto', padding: 32, background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
           <div
             ref={previewRef}
-            className="preview-wrapper"
+            className="preview-scale-wrapper"
             style={{
               transformOrigin: 'top center',
               transform: `scale(${previewScale})`,

@@ -272,6 +272,7 @@
     top: 0;
     left: 0;
     width: 100%;
+    transform: none !important;
   }
 
   /* Cada slide = uma página */
