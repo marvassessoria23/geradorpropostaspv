@@ -433,19 +433,6 @@ const ProposalEditor: React.FC = () => {
         }
       };
 
-      // Coletar todos os estilos da página atual (try/catch por sheet para CORS)
-      const styles = Array.from(document.styleSheets)
-        .map((sheet) => {
-          try {
-            return Array.from(sheet.cssRules)
-              .map((rule) => rule.cssText)
-              .join('\n');
-          } catch {
-            return '';
-          }
-        })
-        .join('\n');
-
       const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
 
       if (slides.length === 0) {
@@ -457,7 +444,24 @@ const ProposalEditor: React.FC = () => {
       const processedSlides = await Promise.all(
         slides.map(async (slide) => {
           const clone = slide.cloneNode(true) as HTMLElement;
-          clone.querySelectorAll('button, [data-pdf-exclude]').forEach((el) => el.remove());
+
+          // Remover TUDO que é interativo ou de edição
+          clone
+            .querySelectorAll(
+              'button, [data-pdf-exclude], [contenteditable], .slide-controls, .slide-hover-controls, [data-pdf-exclude="true"]'
+            )
+            .forEach((el) => el.remove());
+
+          // Remover atributos de edição
+          clone.querySelectorAll('*').forEach((el) => {
+            el.removeAttribute('contenteditable');
+            el.removeAttribute('data-slide');
+            el.removeAttribute('spellcheck');
+            el.removeAttribute('tabindex');
+            (el as HTMLElement).style.cursor = 'default';
+            (el as HTMLElement).style.userSelect = 'none';
+            (el as HTMLElement).style.webkitUserSelect = 'none';
+          });
 
           // Converter <img src> para base64
           await Promise.all(
@@ -465,6 +469,8 @@ const ProposalEditor: React.FC = () => {
               if (img.src && !img.src.startsWith('data:')) {
                 img.src = await urlToBase64(img.src);
               }
+              img.style.pointerEvents = 'none';
+              img.draggable = false;
             })
           );
 
@@ -494,47 +500,92 @@ const ProposalEditor: React.FC = () => {
             break-after: page !important;
             display: block !important;
             box-sizing: border-box !important;
-            margin: 0 auto 4px auto !important;
+            margin: 0 !important;
+            cursor: default !important;
+            user-select: none !important;
+            -webkit-user-select: none !important;
           `;
 
           return clone.outerHTML;
         })
       );
 
+      // Coletar estilos da página
+      const styles = Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join('\n');
+          } catch {
+            return '';
+          }
+        })
+        .join('\n');
+
       const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=1280">
   <title>Proposta Comercial - Paiva Nunes Advogados</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-    body { background: #1a1a2e; font-family: 'Lato', sans-serif; }
-    [data-slide] {
-      width: 1280px !important;
-      height: 720px !important;
-      min-height: 720px !important;
-      max-height: 720px !important;
-      overflow: hidden !important;
-      display: block !important;
-      position: relative !important;
-      margin: 0 auto 4px auto !important;
-      transform: none !important;
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      user-select: none !important;
+      -webkit-user-select: none !important;
+      cursor: default !important;
     }
+    body {
+      background: #1a1a2e;
+      font-family: 'Lato', sans-serif;
+    }
+    .slide-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 20px 0;
+    }
+    .slide-wrapper {
+      width: 1280px;
+      height: 720px;
+      overflow: hidden;
+      display: block;
+      position: relative;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+    }
+    [contenteditable] {
+      pointer-events: none !important;
+      user-select: none !important;
+      cursor: default !important;
+    }
+    button { display: none !important; }
     @media print {
-      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      body { background: white; }
-      [data-slide] { page-break-after: always; break-after: page; margin: 0 !important; }
+      body { background: white; padding: 0; }
+      .slide-container { gap: 0; padding: 0; }
+      .slide-wrapper {
+        page-break-after: always;
+        break-after: page;
+        box-shadow: none;
+        margin: 0;
+      }
       @page { size: A4 landscape; margin: 0; }
     }
     ${styles}
   </style>
 </head>
 <body>
-${processedSlides.join('\n')}
+  <div class="slide-container">
+    ${processedSlides.map((s) => `<div class="slide-wrapper">${s}</div>`).join('\n')}
+  </div>
 </body>
 </html>`;
 
