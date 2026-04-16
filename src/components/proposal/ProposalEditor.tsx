@@ -201,6 +201,12 @@ const ProposalEditor: React.FC = () => {
     loadData();
   }, [migrateImages]);
 
+  // Dismiss tooltip after 5 seconds
+  useEffect(() => {
+    const t = setTimeout(() => setShowTip(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
+
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
@@ -381,6 +387,18 @@ const ProposalEditor: React.FC = () => {
           </div>
         </div>
       </div>
+      {showTip && (
+        <div style={{
+          position: 'fixed', bottom: 24, right: 24,
+          background: '#0d2b45', border: '1px solid #c9a84c',
+          color: 'white', padding: '12px 20px', borderRadius: 8,
+          fontSize: 13, zIndex: 9999, fontFamily: "'Lato', sans-serif",
+          boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+          cursor: 'pointer',
+        }} onClick={() => setShowTip(false)}>
+          💡 Clique em qualquer texto no preview para editar diretamente
+        </div>
+      )}
     </div>
   );
 };
