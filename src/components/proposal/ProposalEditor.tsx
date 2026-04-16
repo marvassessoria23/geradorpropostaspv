@@ -3,7 +3,7 @@ import { ProposalData, defaultProposalData, PageType, DEFAULT_BG_COLORS } from "
 import EditorPanel from "./EditorPanel";
 import PageCover from "./PageCover";
 import PageDiagnostico from "./PageDiagnostico";
-import PageEstrategia from "./PageEstrategia";
+import PageEstrategia, { getEstrategiaVisibleSubPages } from "./PageEstrategia";
 import PageArgumentos from "./PageArgumentos";
 import PageSobre from "./PageSobre";
 import PageEquipe from "./PageEquipe";
@@ -410,7 +410,9 @@ const ProposalEditor: React.FC = () => {
               const bgColor = page.customBgColor || DEFAULT_BG_COLORS[page.type];
 
               if (page.type === "estrategia") {
-                globalPageCounter += 3;
+                const visSubs = getEstrategiaVisibleSubPages(data);
+                const extraPages = visSubs.filter(Boolean).length - 1;
+                if (extraPages > 0) globalPageCounter += extraPages;
               }
 
               const slideContent = renderPage(page.type, currentPageNum, bgColor);
