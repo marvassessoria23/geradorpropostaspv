@@ -68,6 +68,7 @@ const ProposalEditor: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [panelOpen, setPanelOpen] = useState(true);
   const [previewScale, setPreviewScale] = useState(0.6);
+  const [showTip, setShowTip] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
