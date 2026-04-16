@@ -1,32 +1,39 @@
 
 
-# Plano: corrigir quebra de PDF + imagens no HTML
+# Plano: generateHTML — documento somente leitura perfeito
 
 ## Diagnóstico
-- **PDF (PageDiagnostico não quebra):** A lógica de subpáginas existe em `generatePDF` (linhas 302–412), mas `scrollHeight` é lido apenas 80ms após o reset de overflow. Em slides pesados pode não dar tempo do reflow propagar, retornando 720px e gerando 1 só página. Solução: aumentar wait, e medir altura com `overflow/maxHeight/height` explicitamente resetados antes do `getBoundingClientRect`/`scrollHeight`.
-- **HTML (imagens não aparecem):** `generateHTML` (linhas 414–502) clona o DOM com `<img src="https://...supabase.co/...">`. Quando o arquivo é aberto via `file://`, navegadores bloqueiam ou as URLs com cache-buster podem falhar. Solução: pré-converter todas as `<img src>` e `background-image: url(...)` inline para base64 antes de serializar.
+A `generateHTML` atual já faz base64 e clone, mas:
+- Não remove `contenteditable` nem atributos de edição → usuário pode editar.
+- Não tem wrapper visual `.slide-wrapper` → falta sombreamento e centralização.
+- Não bloqueia seleção/cursor → parece editor, não documento final.
 
-## Mudanças (1 arquivo: `src/components/proposal/ProposalEditor.tsx`)
+## Mudança (1 arquivo: `src/components/proposal/ProposalEditor.tsx`)
 
-### A. Reforçar `generatePDF` (linhas 332–402)
-- Após aplicar os style overrides do slide, aguardar **150ms + 2 `requestAnimationFrame`** para garantir reflow completo.
-- Ler `naturalHeight` usando `Math.max(slide.scrollHeight, slide.getBoundingClientRect().height, SLIDE_H)` para pegar o maior valor confiável.
-- Manter o restante (captura `toPng` em altura natural, fatiamento em N páginas A4 de 210mm via `yOffsetMm` negativo) — já está correto.
+Substituir o corpo da função `generateHTML` existente pela versão fornecida pelo usuário, com:
 
-### B. Reescrever `generateHTML` como `async` (linhas 414–502)
-- Adicionar helper `urlToBase64(url)` que faz `fetch` + `FileReader.readAsDataURL`, com try/catch (devolve a URL original se falhar).
-- Para cada slide clonado: percorrer `clone.querySelectorAll('img')` e converter `src` (paralelizado com `Promise.all`); percorrer todos os elementos com `style.backgroundImage` contendo `url(...)` e converter também.
-- Adicionar estado `isGeneratingHTML` + overlay análogo ao do PDF (texto: "Gerando HTML... convertendo imagens").
-- Fazer o botão "Gerar HTML" no header chamar a versão async, desabilitado enquanto `isGeneratingHTML`.
+1. **Limpeza de interatividade no clone:**
+   - `querySelectorAll` removendo `button`, `[data-pdf-exclude]`, `[contenteditable]`, `.slide-controls`, `.slide-hover-controls`.
+   - Loop em `clone.querySelectorAll('*')` removendo atributos `contenteditable`, `data-slide`, `spellcheck`, `tabindex` e aplicando `cursor: default`, `user-select: none`.
+   - `img.draggable = false` + `pointer-events: none`.
 
-### C. Estado e overlay
-- `const [isGeneratingHTML, setIsGeneratingHTML] = useState(false);` junto dos outros estados.
-- Bloco `{isGeneratingHTML && ( ... )}` espelhando o overlay do PDF, próximo ao bloco existente em `linhas 666–677`.
+2. **Conversão de imagens (mantida):** `urlToBase64` para `<img src>` e `background-image: url(...)` inline, em paralelo via `Promise.all`.
+
+3. **Estrutura visual:** envolver cada slide em `<div class="slide-wrapper">` dentro de `.slide-container` com `flex column`, `gap: 4px`, sombreamento `box-shadow: 0 4px 24px rgba(0,0,0,0.5)`.
+
+4. **CSS global de bloqueio:**
+   - Reset universal com `user-select: none`, `cursor: default`, `print-color-adjust: exact`.
+   - `[contenteditable] { pointer-events: none }`, `button { display: none }`.
+   - Bloco `@media print` com `@page { size: A4 landscape; margin: 0 }`, remove sombras e gaps.
+
+5. **try/catch/finally** garante `setIsGeneratingHTML(false)` mesmo em erro, com `alert` para feedback.
 
 ## Não modificado
-- Salvamento Supabase, upload de imagens, `EditorPanel`, `index.css`, todos os 10 componentes de página, sub-páginas do `PageEstrategia`, lógica de quebra de subpáginas (mantida intacta — apenas com timing mais robusto).
+- `generatePDF`, salvamento Supabase, upload de imagens, EditorPanel, componentes de página, overlay `isGeneratingHTML` (já existe), botão "Gerar HTML" (já existe).
 
 ## Resultado esperado
-- **PDF:** `PageDiagnostico` com texto longo é capturado em altura natural (>720px) e o jsPDF emite N páginas A4 paisagem por slide, sem distorção.
-- **HTML:** arquivo `proposta.html` autocontido, abre offline com todas as imagens (logo, capa, fotos da equipe, fundos) renderizadas via base64.
+Arquivo `proposta.html` autocontido, abre offline com:
+- Imagens em base64 renderizadas.
+- Texto visível mas não editável nem selecionável.
+- Slides centralizados com sombra (visualização web), e `Ctrl+P` imprime A4 paisagem sem margens.
 
