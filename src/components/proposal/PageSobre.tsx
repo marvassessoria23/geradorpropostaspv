@@ -1,32 +1,44 @@
 import React from "react";
 import { ProposalData } from "./types";
+import InlineEditable from "./InlineEditable";
 
 interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
   bgColor?: string;
+  onChange?: (updates: Partial<ProposalData>) => void;
 }
 
-const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
+const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
+  const up = onChange || (() => {});
+  const fields: (keyof ProposalData)[] = ['sobreText1', 'sobreText2', 'sobreText3'];
 
   return (
     <div className="slide watermark-light" data-slide style={{ padding: '48px 64px', display: 'flex', backgroundColor: bgColor || '#f5f0e8' }}>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <div className="gold-bar-vertical" style={{ height: 48 }} />
-          <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-            {data.sobreTitle}
-          </h2>
+          <InlineEditable
+            tag="h2"
+            value={data.sobreTitle}
+            onChange={(v) => up({ sobreTitle: v })}
+            style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}
+          />
           <div style={{ flex: 1, height: 1, background: 'rgba(26,58,92,0.1)', marginLeft: 16 }} />
         </div>
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {[data.sobreText1, data.sobreText2, data.sobreText3].map((text, i) => (
-            <p key={i} style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, lineHeight: 1.7, textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}>
-              {text}
-            </p>
+          {fields.map((field) => (
+            <InlineEditable
+              key={field}
+              tag="p"
+              value={data[field] as string}
+              onChange={(v) => up({ [field]: v })}
+              multiline
+              style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, lineHeight: 1.7, textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}
+            />
           ))}
         </div>
 

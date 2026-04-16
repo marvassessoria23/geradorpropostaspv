@@ -1,5 +1,6 @@
 import React from "react";
 import { ProposalData } from "./types";
+import InlineEditable from "./InlineEditable";
 import { CreditCard, DollarSign } from "lucide-react";
 
 interface Props {
@@ -7,10 +8,12 @@ interface Props {
   textSizeClass: string;
   pageNumber: number;
   bgColor?: string;
+  onChange?: (updates: Partial<ProposalData>) => void;
 }
 
-const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
+const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
+  const up = onChange || (() => {});
 
   return (
     <div className="slide geometric-dark" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#0d2b45' }}>
@@ -32,13 +35,13 @@ const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bg
               <CreditCard size={24} color="rgba(201,168,76,0.7)" />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <span style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28 }}>{data.honorarioAntecipado1}</span>
-              <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4 }}>{data.honorarioAntecipado1Desc}</p>
+              <InlineEditable value={data.honorarioAntecipado1} onChange={(v) => up({ honorarioAntecipado1: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />
+              <InlineEditable value={data.honorarioAntecipado1Desc} onChange={(v) => up({ honorarioAntecipado1Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />
             </div>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
             <div>
-              <span style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28 }}>{data.honorarioAntecipado2}</span>
-              <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4 }}>{data.honorarioAntecipado2Desc}</p>
+              <InlineEditable value={data.honorarioAntecipado2} onChange={(v) => up({ honorarioAntecipado2: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />
+              <InlineEditable value={data.honorarioAntecipado2Desc} onChange={(v) => up({ honorarioAntecipado2Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />
             </div>
           </div>
         </div>
@@ -51,18 +54,18 @@ const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bg
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <DollarSign size={24} color="rgba(201,168,76,0.7)" />
             </div>
-            <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{data.honorarioExito1}</p>
+            <InlineEditable value={data.honorarioExito1} onChange={(v) => up({ honorarioExito1: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />
             <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
-            <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{data.honorarioExito2}</p>
+            <InlineEditable value={data.honorarioExito2} onChange={(v) => up({ honorarioExito2: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />
           </div>
         </div>
       </div>
 
       <div style={{ textAlign: 'center' }}>
-        <p style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 600, fontSize: 14, marginBottom: 12 }}>{data.parcelamento}</p>
+        <InlineEditable value={data.parcelamento} onChange={(v) => up({ parcelamento: v })} style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 600, fontSize: 14, marginBottom: 12, display: 'block' }} />
         <div className="gold-line" style={{ width: '100%', marginBottom: 12 }} />
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 16 }}>
-          <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.7)', fontSize: sz, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>{data.validadeProposta}</p>
+          <InlineEditable value={data.validadeProposta} onChange={(v) => up({ validadeProposta: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.7)', fontSize: sz, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', display: 'block' }} />
         </div>
       </div>
 
