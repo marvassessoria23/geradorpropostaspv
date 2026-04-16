@@ -257,6 +257,10 @@
     color-adjust: exact !important;
   }
 
+  [contenteditable] {
+    outline: none !important;
+  }
+
   body.printing > * {
     display: none !important;
   }
