@@ -11,6 +11,7 @@ interface Props {
 }
 
 const fs = { small: 12, medium: 14, large: 16 };
+const v = (val: string | undefined | null) => val && val.trim() !== '';
 
 const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = fs[data.textSize] || 14;
@@ -24,30 +25,36 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
 
       <div className="gold-badge" style={{ marginBottom: 24 }}>CONTEXTO DA DEMANDA</div>
 
-      <InlineEditable
-        tag="h3"
-        value={data.diagnosticoTitle}
-        onChange={(v) => up({ diagnosticoTitle: v })}
-        style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, color: '#1a3a5c', fontSize: 20, marginBottom: 16 }}
-      />
+      {v(data.diagnosticoTitle) && (
+        <InlineEditable
+          tag="h3"
+          value={data.diagnosticoTitle}
+          onChange={(v) => up({ diagnosticoTitle: v })}
+          style={{ fontFamily: "'Lato', sans-serif", fontWeight: 700, color: '#1a3a5c', fontSize: 20, marginBottom: 16 }}
+        />
+      )}
 
-      <InlineEditable
-        tag="p"
-        value={data.diagnosticoGreeting}
-        onChange={(v) => up({ diagnosticoGreeting: v })}
-        style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, fontStyle: 'italic', marginBottom: 12 }}
-      />
+      {v(data.diagnosticoGreeting) && (
+        <InlineEditable
+          tag="p"
+          value={data.diagnosticoGreeting}
+          onChange={(v) => up({ diagnosticoGreeting: v })}
+          style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, fontStyle: 'italic', marginBottom: 12 }}
+        />
+      )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {fields.map((field) => (
-          <InlineEditable
-            key={field}
-            tag="p"
-            value={data[field] as string}
-            onChange={(v) => up({ [field]: v })}
-            multiline
-            style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, lineHeight: 1.7, textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}
-          />
+          v(data[field] as string) ? (
+            <InlineEditable
+              key={field}
+              tag="p"
+              value={data[field] as string}
+              onChange={(v) => up({ [field]: v })}
+              multiline
+              style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, lineHeight: 1.7, textAlign: 'justify', margin: 0, whiteSpace: 'pre-wrap' }}
+            />
+          ) : null
         ))}
       </div>
 

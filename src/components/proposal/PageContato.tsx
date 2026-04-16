@@ -12,6 +12,8 @@ interface Props {
   onChange?: (updates: Partial<ProposalData>) => void;
 }
 
+const v = (val: string | undefined | null) => val && val.trim() !== '';
+
 const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const logo = data.logoImage || logoImg;
   const logoW = Math.max((data.logoSize || 120) * 0.8, 48);
@@ -25,7 +27,7 @@ const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor
     ...(data.youtube ? [{ icon: Youtube, value: data.youtube, key: 'youtube' as const }] : []),
     ...(data.linkedin ? [{ icon: Linkedin, value: data.linkedin, key: 'linkedin' as const }] : []),
     { icon: Globe, value: data.website, key: 'website' as const },
-  ].filter(item => item.value);
+  ].filter(item => item.value && item.value.trim() !== '');
 
   return (
     <div className="slide watermark-light" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bgColor || '#f5f0e8' }}>
@@ -39,12 +41,16 @@ const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor
       <div style={{ flex: 1, padding: '48px 64px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative' }}>
         <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto', marginBottom: 16 }} />
 
-        <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>
-          {data.nomeEscritorio}
-        </h2>
-        <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.5)', letterSpacing: '0.15em', fontSize: 13, textTransform: 'uppercase', marginBottom: 24 }}>
-          {data.subtituloEscritorio}
-        </p>
+        {v(data.nomeEscritorio) && (
+          <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 32, fontWeight: 700, letterSpacing: '0.1em', marginBottom: 4 }}>
+            {data.nomeEscritorio}
+          </h2>
+        )}
+        {v(data.subtituloEscritorio) && (
+          <p style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.5)', letterSpacing: '0.15em', fontSize: 13, textTransform: 'uppercase', marginBottom: 24 }}>
+            {data.subtituloEscritorio}
+          </p>
+        )}
 
         <div className="gold-line" style={{ width: 48, marginBottom: 24 }} />
 
@@ -52,36 +58,42 @@ const PageContato: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor
           Contato
         </h3>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
-          {contactItems.map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <item.icon size={13} color="#c9a84c" />
+        {contactItems.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 28 }}>
+            {contactItems.map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, justifyContent: 'center' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <item.icon size={13} color="#c9a84c" />
+                </div>
+                <InlineEditable
+                  value={item.value}
+                  onChange={(v) => up({ [item.key]: v })}
+                  style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: 14, display: 'inline-block' }}
+                />
               </div>
-              <InlineEditable
-                value={item.value}
-                onChange={(v) => up({ [item.key]: v })}
-                style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: 14, display: 'inline-block' }}
-              />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         <div style={{ maxWidth: 400 }}>
-          <InlineEditable
-            tag="p"
-            value={data.contatoTexto}
-            onChange={(v) => up({ contatoTexto: v })}
-            multiline
-            style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.6)', fontSize: sz, lineHeight: 1.7, marginBottom: 20, whiteSpace: 'pre-wrap' }}
-          />
+          {v(data.contatoTexto) && (
+            <InlineEditable
+              tag="p"
+              value={data.contatoTexto}
+              onChange={(v) => up({ contatoTexto: v })}
+              multiline
+              style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.6)', fontSize: sz, lineHeight: 1.7, marginBottom: 20, whiteSpace: 'pre-wrap' }}
+            />
+          )}
           <div className="gold-line" style={{ width: 64, margin: '0 auto 16px' }} />
-          <InlineEditable
-            tag="p"
-            value={data.contatoSlogan}
-            onChange={(v) => up({ contatoSlogan: v })}
-            style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, fontWeight: 700, fontStyle: 'italic' }}
-          />
+          {v(data.contatoSlogan) && (
+            <InlineEditable
+              tag="p"
+              value={data.contatoSlogan}
+              onChange={(v) => up({ contatoSlogan: v })}
+              style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, fontWeight: 700, fontStyle: 'italic' }}
+            />
+          )}
         </div>
 
         <div className="page-num">{pageNumber}</div>

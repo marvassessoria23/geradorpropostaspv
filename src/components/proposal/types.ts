@@ -162,6 +162,7 @@ export interface ProposalData {
   textSize: "small" | "medium" | "large";
   viewMode: "pages" | "continuous";
   pages: ProposalPage[];
+  hiddenFields?: Record<string, boolean>;
 }
 
 export const defaultPages: ProposalPage[] = [

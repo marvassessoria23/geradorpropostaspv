@@ -370,17 +370,38 @@ const ProposalEditor: React.FC = () => {
                 globalPageCounter += 3;
               }
 
+              const slideContent = renderPage(page.type, currentPageNum, bgColor);
+              const toggleBtn = (
+                <div className="slide-controls" style={{
+                  position: 'absolute', top: 8, right: 8, zIndex: 100,
+                  opacity: 0, transition: 'opacity 0.2s',
+                }}>
+                  <button
+                    onClick={() => updateData({ pages: data.pages.map((p) => p.id === page.id ? { ...p, visible: !p.visible } : p) })}
+                    style={{
+                      background: 'rgba(0,0,0,0.6)', border: '1px solid #c9a84c',
+                      color: '#c9a84c', borderRadius: 4, padding: '4px 8px',
+                      cursor: 'pointer', fontSize: 11, fontFamily: "'Lato', sans-serif",
+                    }}
+                  >
+                    🙈 Ocultar slide
+                  </button>
+                </div>
+              );
+
               if (page.type === "estrategia") {
                 return (
-                  <div key={page.id} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0 }}>
-                    {renderPage(page.type, currentPageNum, bgColor)}
+                  <div key={page.id} className="slide-wrapper" style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}>
+                    {toggleBtn}
+                    {slideContent}
                   </div>
                 );
               }
 
               return (
-                <div key={page.id} data-proposal-page className={data.viewMode === "pages" ? "slide-shadow" : ""} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0 }}>
-                  {renderPage(page.type, currentPageNum, bgColor)}
+                <div key={page.id} data-proposal-page className={`slide-wrapper ${data.viewMode === "pages" ? "slide-shadow" : ""}`} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}>
+                  {toggleBtn}
+                  {slideContent}
                 </div>
               );
             })}

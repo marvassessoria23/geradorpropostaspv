@@ -218,6 +218,28 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
     onChange({ fechamentoSteps: data.fechamentoSteps.filter((_, i) => i !== index) });
   };
 
+  const moveStep = (index: number, dir: -1 | 1) => {
+    const newIdx = index + dir;
+    if (newIdx < 0 || newIdx >= data.fechamentoSteps.length) return;
+    const arr = [...data.fechamentoSteps];
+    [arr[index], arr[newIdx]] = [arr[newIdx], arr[index]];
+    onChange({ fechamentoSteps: arr });
+  };
+
+  const duplicateStep = (index: number) => {
+    const arr = [...data.fechamentoSteps];
+    arr.splice(index + 1, 0, arr[index]);
+    onChange({ fechamentoSteps: arr });
+  };
+
+  const toggleFieldHidden = (key: string) => {
+    const hf = { ...(data.hiddenFields || {}) };
+    hf[key] = !hf[key];
+    onChange({ hiddenFields: hf });
+  };
+
+  const isFieldHidden = (key: string) => !!data.hiddenFields?.[key];
+
   const updateAvaliacao = (id: string, field: keyof Avaliacao, value: string | number) => {
     onChange({ avaliacoes: data.avaliacoes.map((a) => (a.id === id ? { ...a, [field]: value } : a)) });
   };
@@ -384,42 +406,44 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
           </div>
         );
 
-      case "estrategia":
+      case "estrategia": {
+        const estrategiaFields = [
+          { key: 'estrategiaIntro', label: 'Introdução da Estratégia', textarea: true },
+          { key: 'movimento1Title', label: 'Mov. 1 — Título', textarea: false },
+          { key: 'movimento1Intro', label: 'Mov. 1 — Introdução', textarea: true },
+          { key: 'movimento1Item1', label: 'Mov. 1 — Item 1', textarea: true },
+          { key: 'movimento1Item2', label: 'Mov. 1 — Item 2', textarea: true },
+          { key: 'movimento1Item3', label: 'Mov. 1 — Item 3', textarea: true },
+          { key: 'movimento1Resultado', label: 'Mov. 1 — Resultado', textarea: true },
+          { key: 'movimento2Title', label: 'Mov. 2 — Título', textarea: false },
+          { key: 'movimento2Consignacao', label: 'Mov. 2 — Consignação', textarea: true },
+          { key: 'movimento2Obrigacao', label: 'Mov. 2 — Obrigação', textarea: true },
+          { key: 'movimento2Pedidos', label: 'Mov. 2 — Pedidos', textarea: true },
+          { key: 'movimento2Observacoes', label: 'Mov. 2 — Observações', textarea: true },
+          { key: 'movimento3Title', label: 'Mov. 3 — Título', textarea: false },
+          { key: 'movimento3Body', label: 'Mov. 3 — Corpo', textarea: true },
+        ];
         return (
           <div className="space-y-3">
-            <Field label="Introdução da Estratégia"><Textarea value={data.estrategiaIntro} onChange={(e) => onChange({ estrategiaIntro: e.target.value })} className={textareaClass} /></Field>
-            {[1, 2, 3].map((num) => (
-              <div key={num} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
-                <h4 style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Movimento {num}</h4>
-                {num === 1 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento1Title} onChange={(e) => onChange({ movimento1Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Introdução"><Textarea value={data.movimento1Intro} onChange={(e) => onChange({ movimento1Intro: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Item 1"><Textarea value={data.movimento1Item1} onChange={(e) => onChange({ movimento1Item1: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Item 2"><Textarea value={data.movimento1Item2} onChange={(e) => onChange({ movimento1Item2: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Item 3"><Textarea value={data.movimento1Item3} onChange={(e) => onChange({ movimento1Item3: e.target.value })} className={textareaClass} rows={3} /></Field>
-                    <Field label="Resultado"><Textarea value={data.movimento1Resultado} onChange={(e) => onChange({ movimento1Resultado: e.target.value })} className={textareaClass} rows={2} /></Field>
-                  </>
-                )}
-                {num === 2 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento2Title} onChange={(e) => onChange({ movimento2Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Consignação"><Textarea value={data.movimento2Consignacao} onChange={(e) => onChange({ movimento2Consignacao: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Obrigação"><Textarea value={data.movimento2Obrigacao} onChange={(e) => onChange({ movimento2Obrigacao: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Pedidos"><Textarea value={data.movimento2Pedidos} onChange={(e) => onChange({ movimento2Pedidos: e.target.value })} className={textareaClass} /></Field>
-                    <Field label="Observações"><Textarea value={data.movimento2Observacoes} onChange={(e) => onChange({ movimento2Observacoes: e.target.value })} className={textareaClass} /></Field>
-                  </>
-                )}
-                {num === 3 && (
-                  <>
-                    <Field label="Título"><Input value={data.movimento3Title} onChange={(e) => onChange({ movimento3Title: e.target.value })} className={inputClass} /></Field>
-                    <Field label="Corpo"><Textarea value={data.movimento3Body} onChange={(e) => onChange({ movimento3Body: e.target.value })} className={textareaClass} rows={3} /></Field>
-                  </>
+            {estrategiaFields.map((f) => (
+              <div key={f.key} style={{ opacity: isFieldHidden(f.key) ? 0.4 : 1 }}>
+                <div className="flex items-center justify-between mb-1">
+                  <Label style={{ fontSize: 10, fontWeight: 600, color: 'rgba(201,168,76,0.8)', textTransform: 'uppercase', letterSpacing: '0.15em', fontFamily: "'Lato', sans-serif" }}>{f.label}</Label>
+                  <FieldControls
+                    onToggleVisible={() => toggleFieldHidden(f.key)}
+                    isVisible={!isFieldHidden(f.key)}
+                  />
+                </div>
+                {f.textarea ? (
+                  <Textarea value={(data as any)[f.key]} onChange={(e) => onChange({ [f.key]: e.target.value })} className={textareaClass} rows={3} />
+                ) : (
+                  <Input value={(data as any)[f.key]} onChange={(e) => onChange({ [f.key]: e.target.value })} className={inputClass} />
                 )}
               </div>
             ))}
           </div>
         );
+      }
 
       case "argumentos":
         return (
@@ -597,10 +621,19 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
             <Field label="Passos">
               <div className="space-y-2">
                 {data.fechamentoSteps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span style={{ color: '#c9a84c', fontSize: 10, fontWeight: 700, width: 16, textAlign: 'center', flexShrink: 0 }}>{i + 1}</span>
-                    <Input value={step} onChange={(e) => updateStep(i, e.target.value)} className={`${inputClass} flex-1`} />
-                    <button onClick={() => removeStep(i)} className="p-1 transition-colors" style={{ color: 'rgba(239,68,68,0.4)' }}><Trash2 size={11} /></button>
+                  <div key={i} style={{ border: '1px solid rgba(201,168,76,0.1)', borderRadius: 6, padding: 8 }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ color: '#c9a84c', fontSize: 10, fontWeight: 700 }}>Passo {i + 1}</span>
+                      <FieldControls
+                        onMoveUp={() => moveStep(i, -1)}
+                        onMoveDown={() => moveStep(i, 1)}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < data.fechamentoSteps.length - 1}
+                        onDuplicate={() => duplicateStep(i)}
+                        onDelete={() => removeStep(i)}
+                      />
+                    </div>
+                    <Input value={step} onChange={(e) => updateStep(i, e.target.value)} className={`${inputClass}`} />
                   </div>
                 ))}
                 <button onClick={addStep} className="flex items-center gap-1 text-[11px] transition-colors" style={{ color: 'rgba(201,168,76,0.6)' }}>
