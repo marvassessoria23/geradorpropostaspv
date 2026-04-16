@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { ProposalData, defaultProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
+import FieldControls from "./FieldControls";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
