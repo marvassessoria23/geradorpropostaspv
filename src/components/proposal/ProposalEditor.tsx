@@ -411,6 +411,96 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
+  const generateHTML = () => {
+    try {
+      // Coletar todos os estilos da página atual (try/catch por sheet para CORS)
+      const styles = Array.from(document.styleSheets)
+        .map((sheet) => {
+          try {
+            return Array.from(sheet.cssRules)
+              .map((rule) => rule.cssText)
+              .join('\n');
+          } catch {
+            return '';
+          }
+        })
+        .join('\n');
+
+      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
+
+      if (slides.length === 0) {
+        alert('Nenhum slide encontrado.');
+        return;
+      }
+
+      const slidesHTML = slides
+        .map((slide) => {
+          const clone = slide.cloneNode(true) as HTMLElement;
+          clone.querySelectorAll('button, [data-pdf-exclude]').forEach((el) => el.remove());
+          clone.style.transform = 'none';
+          clone.style.width = '1280px';
+          clone.style.height = '720px';
+          clone.style.minHeight = '720px';
+          clone.style.maxHeight = '720px';
+          clone.style.overflow = 'hidden';
+          clone.style.marginBottom = '0';
+          clone.style.pageBreakAfter = 'always';
+          return clone.outerHTML;
+        })
+        .join('\n');
+
+      const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proposta Comercial - Paiva Nunes Advogados</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background: #1a1a2e; font-family: 'Lato', sans-serif; }
+    [data-slide] {
+      width: 1280px !important;
+      height: 720px !important;
+      min-height: 720px !important;
+      max-height: 720px !important;
+      overflow: hidden !important;
+      display: block !important;
+      position: relative !important;
+      margin: 0 auto 2px auto !important;
+      transform: none !important;
+    }
+    @media print {
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      body { background: white; }
+      [data-slide] { page-break-after: always; break-after: page; margin: 0 !important; }
+      @page { size: A4 landscape; margin: 0; }
+    }
+    ${styles}
+  </style>
+</head>
+<body>
+${slidesHTML}
+</body>
+</html>`;
+
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'proposta.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erro ao gerar HTML:', error);
+      alert('Erro ao gerar HTML: ' + (error as Error).message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1628', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontSize: 18 }}>
