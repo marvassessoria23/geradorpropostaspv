@@ -14,6 +14,8 @@ import PageContato from "./PageContato";
 import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
 import logoImg from "@/assets/logo-paiva-nunes.png";
 import { supabase } from "@/integrations/supabase/client";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
 
 const TEXT_SIZE_MAP = {
   small: "text-xs",
@@ -296,31 +298,67 @@ const ProposalEditor: React.FC = () => {
 
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
-  const generatePDF = () => {
-    const previewWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
-    const originalTransform = previewWrapper?.style.transform;
-    const originalWidth = previewWrapper?.style.width;
-    const originalTransformOrigin = previewWrapper?.style.transformOrigin;
+  const generatePDF = async () => {
+    setIsGeneratingPDF(true);
 
-    if (previewWrapper) {
-      previewWrapper.style.transform = 'none';
-      previewWrapper.style.width = '297mm';
-      previewWrapper.style.transformOrigin = 'unset';
+    try {
+      await document.fonts.ready;
+      await new Promise((r) => setTimeout(r, 500));
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: 'a4',
+        compress: true,
+      });
+
+      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
+
+      if (slides.length === 0) {
+        alert('Nenhum slide encontrado. Tente novamente.');
+        setIsGeneratingPDF(false);
+        return;
+      }
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const width = slide.scrollWidth || slide.offsetWidth || 1280;
+        const height = slide.scrollHeight || slide.offsetHeight || 720;
+
+        const dataUrl = await toPng(slide, {
+          width,
+          height,
+          style: {
+            transform: 'none',
+            transformOrigin: 'top left',
+            margin: '0',
+          },
+          pixelRatio: 2,
+          skipFonts: false,
+          fetchRequestInit: {
+            mode: 'cors' as RequestMode,
+            cache: 'no-cache' as RequestCache,
+          },
+          filter: (node: HTMLElement) => {
+            if (node.tagName === 'BUTTON') return false;
+            if (node.classList?.contains?.('slide-controls')) return false;
+            if (node.classList?.contains?.('slide-hover-controls')) return false;
+            if (node.getAttribute?.('data-pdf-exclude') === 'true') return false;
+            return true;
+          },
+        });
+
+        if (i > 0) pdf.addPage('a4', 'landscape');
+        pdf.addImage(dataUrl, 'PNG', 0, 0, 297, 210);
+      }
+
+      pdf.save('proposta.pdf');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      alert('Erro ao gerar PDF: ' + (error as Error).message);
+    } finally {
+      setIsGeneratingPDF(false);
     }
-
-    document.body.classList.add('printing');
-
-    setTimeout(() => {
-      window.print();
-      setTimeout(() => {
-        document.body.classList.remove('printing');
-        if (previewWrapper) {
-          previewWrapper.style.transform = originalTransform || '';
-          previewWrapper.style.width = originalWidth || '';
-          previewWrapper.style.transformOrigin = originalTransformOrigin || '';
-        }
-      }, 1000);
-    }, 300);
   };
 
   if (isLoading) {
