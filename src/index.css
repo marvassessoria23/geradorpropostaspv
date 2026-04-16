@@ -240,14 +240,13 @@
   }
 }
 
-  [contenteditable]:hover {
-    outline: 2px dashed rgba(201, 168, 76, 0.4) !important;
-    border-radius: 3px;
-  }
-  [contenteditable]:focus {
-    outline: 2px solid #c9a84c !important;
-    background: rgba(201, 168, 76, 0.05);
-  }
+[contenteditable]:hover {
+  outline: 2px dashed rgba(201, 168, 76, 0.4) !important;
+  border-radius: 3px;
+}
+[contenteditable]:focus {
+  outline: 2px solid #c9a84c !important;
+  background: rgba(201, 168, 76, 0.05);
 }
 
 @media print {
