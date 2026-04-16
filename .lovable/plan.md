@@ -1,35 +1,31 @@
 
 
-# Plano: PDF Definitivo com html-to-image + jsPDF
+# Fix: Force 1280x720 capture size in generatePDF
 
-## Diagnóstico
-- `html-to-image` **não está instalado**. `jspdf` provavelmente também não está. Preciso instalar ambos.
-- Todos os 10 componentes de página já têm `data-slide` na div raiz (incluindo as 4 sub-páginas de Estratégia). Nada a ajustar aí.
-- `.print-area` envolve a área scrollável, e dentro dela `.preview-scale-wrapper` aplica `transform: scale()`. O `html-to-image` captura cada `[data-slide]` individualmente passando `transform: 'none'` no style override, então o scale não interfere — não preciso reestruturar o JSX.
-- Botão "Ocultar slide" (no hover) e tooltip de dica precisam ser excluídos da captura via filtro (`tagName === 'BUTTON'` já cobre o botão; tooltip recebe `data-pdf-exclude="true"`).
-- CSS `@media print` (linhas 253–305 de `index.css`) e toda lógica `body.classList.add('printing')` / `window.print()` serão removidos.
+## Problem
+`slide.offsetWidth` returns the scaled visual size (~768px), so `toPng` captures at low resolution and `jsPDF` stretches → distorted PDF.
 
-## Mudanças (3 arquivos)
+## Solution
+Override `width`/`height` to fixed 1280x720 in `toPng` options + style, ignoring the visual scale.
 
-### 1. `package.json` — instalar dependências
-```bash
-npm install html-to-image jspdf
-```
+## Change (1 file, 1 function)
 
-### 2. `src/components/proposal/ProposalEditor.tsx`
-- Importar `toPng` de `html-to-image` e `jsPDF` de `jspdf`.
-- Adicionar estado `isGeneratingPDF`.
-- Substituir `generatePDF` pela versão assíncrona que itera `document.querySelectorAll('[data-slide]')`, gera PNG de cada slide com `pixelRatio: 2`, monta PDF A4 paisagem (297×210mm) e salva como `proposta.pdf`. Filtro exclui `BUTTON`, `.slide-controls`, `.slide-hover-controls` e `[data-pdf-exclude="true"]`.
-- Adicionar overlay full-screen "Gerando PDF…" enquanto `isGeneratingPDF` for `true`.
-- Adicionar `data-pdf-exclude="true"` no tooltip "💡 Clique em qualquer texto…" (linha 471).
-- Botão de ocultar slide já é `<button>` → filtrado automaticamente.
+### `src/components/proposal/ProposalEditor.tsx`
+Replace the entire `generatePDF` function with the version provided in the user message:
+- Pass `width: 1280, height: 720` as top-level `toPng` options
+- Style override: `transform: 'none'`, `transformOrigin: 'top left'`, fixed `width/height/minHeight/maxHeight: 1280px/720px`, `overflow: hidden`, `position: relative`
+- `pixelRatio: 1.5`
+- Filter excludes: `BUTTON`, `.slide-controls`, `.slide-hover-controls`, `[data-pdf-exclude="true"]`
+- Adds image at A4 landscape (297×210mm)
 
-### 3. `src/index.css`
-- Remover completamente o bloco `@media print { … }` (linhas 253–305). Mantém o resto do arquivo intacto.
+## Verifications (read-only, no edits unless missing)
+- `useState` for `isGeneratingPDF` already exists ✓ (added in previous turn)
+- Loading overlay JSX already exists ✓ (added in previous turn)
+- All 10 page components have `data-slide` on root div ✓ (confirmed in earlier plan)
+- Imports `toPng` from `html-to-image` and `jsPDF` from `jspdf` already present ✓ (added in previous turn)
 
-## Não modificado
-- Salvamento (Supabase), upload de imagens, todos os componentes de página (`PageCover`, `PageDiagnostico`, `PageEstrategia`, etc.), lógica de auto-ocultar slides, sub-páginas, EditorPanel, classe `preview-scale-wrapper` (mantida para layout visual).
+If any of the above is missing during build, I will add it; otherwise only `generatePDF` body changes.
 
-## Resultado esperado
-- Clicar em "Gerar PDF" mostra overlay, gera um arquivo `proposta.pdf` A4 paisagem, uma página por slide visível, sem botões/tooltips, com fontes e cores corretas, sem dependência de `window.print()`.
+## NOT Modified
+Save/load, images, page components, EditorPanel, CSS, anything else.
 
