@@ -254,64 +254,56 @@
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    color-adjust: exact !important;
   }
 
-  [contenteditable] {
-    outline: none !important;
+  /* Esconder tudo quando imprimindo */
+  body.printing * {
+    visibility: hidden;
   }
 
-  body.printing > * {
-    display: none !important;
+  /* Mostrar apenas os slides */
+  body.printing .print-area,
+  body.printing .print-area * {
+    visibility: visible;
   }
 
   body.printing .print-area {
-    display: block !important;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    width: 100% !important;
-    height: auto !important;
-    z-index: 99999 !important;
-    background: white !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
   }
 
-  body.printing .proposal-page {
+  /* Cada slide = uma página */
+  body.printing [data-slide] {
+    position: relative;
     width: 297mm !important;
     height: 210mm !important;
-    min-height: unset !important;
-    max-height: 210mm !important;
     overflow: hidden !important;
     page-break-after: always !important;
     break-after: page !important;
     transform: none !important;
     margin: 0 !important;
-    padding: 40px 56px !important;
     box-sizing: border-box !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative !important;
   }
 
-  body.printing .proposal-page:last-child {
+  body.printing [data-slide]:last-child {
     page-break-after: avoid !important;
-    break-after: avoid !important;
   }
 
-  body.printing .preview-wrapper,
-  body.printing .preview-container,
-  body.printing [class*="preview"] {
-    transform: none !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    background: transparent !important;
+  /* Esconder botões de edição inline no PDF */
+  body.printing [contenteditable] {
+    outline: none !important;
+    cursor: default !important;
+  }
+
+  body.printing .slide-controls,
+  body.printing button {
+    display: none !important;
   }
 
   @page {
     size: A4 landscape;
-    margin: 0mm;
+    margin: 0;
   }
 }
