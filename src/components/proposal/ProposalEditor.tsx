@@ -111,6 +111,7 @@ const ProposalEditor: React.FC = () => {
   const [hoveredSlide, setHoveredSlide] = useState<string | null>(null);
   const [showTip, setShowTip] = useState(true);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [isGeneratingHTML, setIsGeneratingHTML] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -356,10 +357,12 @@ const ProposalEditor: React.FC = () => {
           position: 'relative',
         });
 
-        // Allow layout to settle
-        await new Promise((r) => setTimeout(r, 80));
+        // Allow layout to settle (longer wait + 2x rAF for heavy slides)
+        await new Promise((r) => setTimeout(r, 150));
+        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
 
-        const naturalHeight = Math.max(slide.scrollHeight, SLIDE_H);
+        const rectH = slide.getBoundingClientRect().height;
+        const naturalHeight = Math.ceil(Math.max(slide.scrollHeight, rectH, SLIDE_H));
 
         let dataUrl = '';
         try {
@@ -411,8 +414,25 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
-  const generateHTML = () => {
+  const generateHTML = async () => {
+    setIsGeneratingHTML(true);
     try {
+      const urlToBase64 = async (url: string): Promise<string> => {
+        if (!url || url.startsWith('data:')) return url;
+        try {
+          const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+          const blob = await response.blob();
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return url;
+        }
+      };
+
       // Coletar todos os estilos da página atual (try/catch por sheet para CORS)
       const styles = Array.from(document.styleSheets)
         .map((sheet) => {
@@ -430,24 +450,56 @@ const ProposalEditor: React.FC = () => {
 
       if (slides.length === 0) {
         alert('Nenhum slide encontrado.');
+        setIsGeneratingHTML(false);
         return;
       }
 
-      const slidesHTML = slides
-        .map((slide) => {
+      const processedSlides = await Promise.all(
+        slides.map(async (slide) => {
           const clone = slide.cloneNode(true) as HTMLElement;
           clone.querySelectorAll('button, [data-pdf-exclude]').forEach((el) => el.remove());
-          clone.style.transform = 'none';
-          clone.style.width = '1280px';
-          clone.style.height = '720px';
-          clone.style.minHeight = '720px';
-          clone.style.maxHeight = '720px';
-          clone.style.overflow = 'hidden';
-          clone.style.marginBottom = '0';
-          clone.style.pageBreakAfter = 'always';
+
+          // Converter <img src> para base64
+          await Promise.all(
+            Array.from(clone.querySelectorAll('img')).map(async (img) => {
+              if (img.src && !img.src.startsWith('data:')) {
+                img.src = await urlToBase64(img.src);
+              }
+            })
+          );
+
+          // Converter background-image inline para base64
+          await Promise.all(
+            (Array.from(clone.querySelectorAll('*')) as HTMLElement[]).map(async (el) => {
+              const bg = el.style?.backgroundImage;
+              if (bg && bg.includes('url(') && !bg.includes('data:')) {
+                const match = bg.match(/url\(['"]?([^'")\s]+)['"]?\)/);
+                if (match?.[1]) {
+                  const b64 = await urlToBase64(match[1]);
+                  el.style.backgroundImage = `url("${b64}")`;
+                }
+              }
+            })
+          );
+
+          clone.style.cssText = `
+            width: 1280px !important;
+            height: 720px !important;
+            min-height: 720px !important;
+            max-height: 720px !important;
+            overflow: hidden !important;
+            transform: none !important;
+            position: relative !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            display: block !important;
+            box-sizing: border-box !important;
+            margin: 0 auto 4px auto !important;
+          `;
+
           return clone.outerHTML;
         })
-        .join('\n');
+      );
 
       const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -469,7 +521,7 @@ const ProposalEditor: React.FC = () => {
       overflow: hidden !important;
       display: block !important;
       position: relative !important;
-      margin: 0 auto 2px auto !important;
+      margin: 0 auto 4px auto !important;
       transform: none !important;
     }
     @media print {
@@ -482,7 +534,7 @@ const ProposalEditor: React.FC = () => {
   </style>
 </head>
 <body>
-${slidesHTML}
+${processedSlides.join('\n')}
 </body>
 </html>`;
 
@@ -498,6 +550,8 @@ ${slidesHTML}
     } catch (error) {
       console.error('Erro ao gerar HTML:', error);
       alert('Erro ao gerar HTML: ' + (error as Error).message);
+    } finally {
+      setIsGeneratingHTML(false);
     }
   };
 
@@ -572,9 +626,10 @@ ${slidesHTML}
           </span>
           <button
             onClick={generateHTML}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8, background: 'transparent', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: '1px solid #c9a84c', cursor: 'pointer' }}
+            disabled={isGeneratingHTML}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8, background: 'transparent', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: '1px solid #c9a84c', cursor: isGeneratingHTML ? 'not-allowed' : 'pointer', opacity: isGeneratingHTML ? 0.6 : 1 }}
           >
-            🌐 Gerar HTML
+            🌐 {isGeneratingHTML ? 'Gerando...' : 'Gerar HTML'}
           </button>
           <button
             onClick={generatePDF}
@@ -673,6 +728,18 @@ ${slidesHTML}
           <div style={{ fontSize: 56, marginBottom: 16 }}>⏳</div>
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Gerando PDF...</div>
           <div style={{ fontSize: 13, opacity: 0.7 }}>Aguarde, isso pode levar alguns segundos</div>
+        </div>
+      )}
+      {isGeneratingHTML && (
+        <div data-pdf-exclude="true" style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(10,22,40,0.92)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#c9a84c', fontFamily: "'Lato', sans-serif",
+        }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🌐</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Gerando HTML...</div>
+          <div style={{ fontSize: 13, opacity: 0.7 }}>Aguarde, convertendo imagens para base64</div>
         </div>
       )}
     </div>
