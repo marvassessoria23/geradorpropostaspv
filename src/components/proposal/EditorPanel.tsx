@@ -218,6 +218,28 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
     onChange({ fechamentoSteps: data.fechamentoSteps.filter((_, i) => i !== index) });
   };
 
+  const moveStep = (index: number, dir: -1 | 1) => {
+    const newIdx = index + dir;
+    if (newIdx < 0 || newIdx >= data.fechamentoSteps.length) return;
+    const arr = [...data.fechamentoSteps];
+    [arr[index], arr[newIdx]] = [arr[newIdx], arr[index]];
+    onChange({ fechamentoSteps: arr });
+  };
+
+  const duplicateStep = (index: number) => {
+    const arr = [...data.fechamentoSteps];
+    arr.splice(index + 1, 0, arr[index]);
+    onChange({ fechamentoSteps: arr });
+  };
+
+  const toggleFieldHidden = (key: string) => {
+    const hf = { ...(data.hiddenFields || {}) };
+    hf[key] = !hf[key];
+    onChange({ hiddenFields: hf });
+  };
+
+  const isFieldHidden = (key: string) => !!data.hiddenFields?.[key];
+
   const updateAvaliacao = (id: string, field: keyof Avaliacao, value: string | number) => {
     onChange({ avaliacoes: data.avaliacoes.map((a) => (a.id === id ? { ...a, [field]: value } : a)) });
   };
