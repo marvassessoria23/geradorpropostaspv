@@ -621,10 +621,19 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
             <Field label="Passos">
               <div className="space-y-2">
                 {data.fechamentoSteps.map((step, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <span style={{ color: '#c9a84c', fontSize: 10, fontWeight: 700, width: 16, textAlign: 'center', flexShrink: 0 }}>{i + 1}</span>
-                    <Input value={step} onChange={(e) => updateStep(i, e.target.value)} className={`${inputClass} flex-1`} />
-                    <button onClick={() => removeStep(i)} className="p-1 transition-colors" style={{ color: 'rgba(239,68,68,0.4)' }}><Trash2 size={11} /></button>
+                  <div key={i} style={{ border: '1px solid rgba(201,168,76,0.1)', borderRadius: 6, padding: 8 }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span style={{ color: '#c9a84c', fontSize: 10, fontWeight: 700 }}>Passo {i + 1}</span>
+                      <FieldControls
+                        onMoveUp={() => moveStep(i, -1)}
+                        onMoveDown={() => moveStep(i, 1)}
+                        canMoveUp={i > 0}
+                        canMoveDown={i < data.fechamentoSteps.length - 1}
+                        onDuplicate={() => duplicateStep(i)}
+                        onDelete={() => removeStep(i)}
+                      />
+                    </div>
+                    <Input value={step} onChange={(e) => updateStep(i, e.target.value)} className={`${inputClass}`} />
                   </div>
                 ))}
                 <button onClick={addStep} className="flex items-center gap-1 text-[11px] transition-colors" style={{ color: 'rgba(201,168,76,0.6)' }}>
