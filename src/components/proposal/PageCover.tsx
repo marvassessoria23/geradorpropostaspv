@@ -10,6 +10,8 @@ interface Props {
   onChange?: (updates: Partial<ProposalData>) => void;
 }
 
+const v = (val: string | undefined | null) => val && val.trim() !== '';
+
 const PageCover: React.FC<Props> = ({ data, pageNumber, bgColor, onChange }) => {
   const logo = data.logoImage || logoImg;
   const logoW = data.logoSize || 140;
@@ -29,27 +31,33 @@ const PageCover: React.FC<Props> = ({ data, pageNumber, bgColor, onChange }) => 
             Honorários
           </h1>
           <div className="gold-line" style={{ width: 160, margin: '32px 0' }} />
-          <InlineEditable
-            tag="h2"
-            value={data.clientName}
-            onChange={(v) => up({ clientName: v })}
-            style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontSize: 24, fontWeight: 300, letterSpacing: '0.05em', margin: 0 }}
-          />
+          {v(data.clientName) && (
+            <InlineEditable
+              tag="h2"
+              value={data.clientName}
+              onChange={(v) => up({ clientName: v })}
+              style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontSize: 24, fontWeight: 300, letterSpacing: '0.05em', margin: 0 }}
+            />
+          )}
         </div>
         <div>
           <div style={{ marginBottom: 12 }}>
-            <InlineEditable
-              tag="p"
-              value={data.nomeEscritorio}
-              onChange={(v) => up({ nomeEscritorio: v })}
-              style={{ fontFamily: "'Playfair Display', serif", color: '#ffffff', fontSize: 18, letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}
-            />
-            <InlineEditable
-              tag="p"
-              value={data.subtituloEscritorio}
-              onChange={(v) => up({ subtituloEscritorio: v })}
-              style={{ fontFamily: "'Lato', sans-serif", color: '#c9a84c', fontSize: 13, letterSpacing: '0.1em', margin: 0 }}
-            />
+            {v(data.nomeEscritorio) && (
+              <InlineEditable
+                tag="p"
+                value={data.nomeEscritorio}
+                onChange={(v) => up({ nomeEscritorio: v })}
+                style={{ fontFamily: "'Playfair Display', serif", color: '#ffffff', fontSize: 18, letterSpacing: '0.15em', textTransform: 'uppercase', margin: 0 }}
+              />
+            )}
+            {v(data.subtituloEscritorio) && (
+              <InlineEditable
+                tag="p"
+                value={data.subtituloEscritorio}
+                onChange={(v) => up({ subtituloEscritorio: v })}
+                style={{ fontFamily: "'Lato', sans-serif", color: '#c9a84c', fontSize: 13, letterSpacing: '0.1em', margin: 0 }}
+              />
+            )}
           </div>
           <img src={logo} alt={data.nomeEscritorio} style={{ width: logoW, height: 'auto', objectFit: 'contain' }} />
         </div>

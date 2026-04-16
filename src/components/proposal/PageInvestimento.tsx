@@ -11,6 +11,8 @@ interface Props {
   onChange?: (updates: Partial<ProposalData>) => void;
 }
 
+const v = (val: string | undefined | null) => val && val.trim() !== '';
+
 const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
   const up = onChange || (() => {});
@@ -35,13 +37,13 @@ const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bg
               <CreditCard size={24} color="rgba(201,168,76,0.7)" />
             </div>
             <div style={{ marginBottom: 16 }}>
-              <InlineEditable value={data.honorarioAntecipado1} onChange={(v) => up({ honorarioAntecipado1: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />
-              <InlineEditable value={data.honorarioAntecipado1Desc} onChange={(v) => up({ honorarioAntecipado1Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />
+              {v(data.honorarioAntecipado1) && <InlineEditable value={data.honorarioAntecipado1} onChange={(v) => up({ honorarioAntecipado1: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />}
+              {v(data.honorarioAntecipado1Desc) && <InlineEditable value={data.honorarioAntecipado1Desc} onChange={(v) => up({ honorarioAntecipado1Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />}
             </div>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
             <div>
-              <InlineEditable value={data.honorarioAntecipado2} onChange={(v) => up({ honorarioAntecipado2: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />
-              <InlineEditable value={data.honorarioAntecipado2Desc} onChange={(v) => up({ honorarioAntecipado2Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />
+              {v(data.honorarioAntecipado2) && <InlineEditable value={data.honorarioAntecipado2} onChange={(v) => up({ honorarioAntecipado2: v })} style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontWeight: 700, fontSize: 28, display: 'block' }} />}
+              {v(data.honorarioAntecipado2Desc) && <InlineEditable value={data.honorarioAntecipado2Desc} onChange={(v) => up({ honorarioAntecipado2Desc: v })} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, marginTop: 4, display: 'block' }} />}
             </div>
           </div>
         </div>
@@ -54,18 +56,18 @@ const PageInvestimento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bg
             <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
               <DollarSign size={24} color="rgba(201,168,76,0.7)" />
             </div>
-            <InlineEditable value={data.honorarioExito1} onChange={(v) => up({ honorarioExito1: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />
+            {v(data.honorarioExito1) && <InlineEditable value={data.honorarioExito1} onChange={(v) => up({ honorarioExito1: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />}
             <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0' }} />
-            <InlineEditable value={data.honorarioExito2} onChange={(v) => up({ honorarioExito2: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />
+            {v(data.honorarioExito2) && <InlineEditable value={data.honorarioExito2} onChange={(v) => up({ honorarioExito2: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.6)', fontSize: sz, lineHeight: 1.7, whiteSpace: 'pre-wrap', display: 'block' }} />}
           </div>
         </div>
       </div>
 
       <div style={{ textAlign: 'center' }}>
-        <InlineEditable value={data.parcelamento} onChange={(v) => up({ parcelamento: v })} style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 600, fontSize: 14, marginBottom: 12, display: 'block' }} />
+        {v(data.parcelamento) && <InlineEditable value={data.parcelamento} onChange={(v) => up({ parcelamento: v })} style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontWeight: 600, fontSize: 14, marginBottom: 12, display: 'block' }} />}
         <div className="gold-line" style={{ width: '100%', marginBottom: 12 }} />
         <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: 16 }}>
-          <InlineEditable value={data.validadeProposta} onChange={(v) => up({ validadeProposta: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.7)', fontSize: sz, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', display: 'block' }} />
+          {v(data.validadeProposta) && <InlineEditable value={data.validadeProposta} onChange={(v) => up({ validadeProposta: v })} multiline style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(255,255,255,0.7)', fontSize: sz, lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap', display: 'block' }} />}
         </div>
       </div>
 
