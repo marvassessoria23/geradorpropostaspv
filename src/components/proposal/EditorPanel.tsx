@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { ProposalData, defaultProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
+import FieldControls from "./FieldControls";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,28 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
     onChange({ argumentos: data.argumentos.filter((a) => a.id !== id) });
   };
 
+  const toggleArgHidden = (id: string) => {
+    onChange({ argumentos: data.argumentos.map((a) => (a.id === id ? { ...a, hidden: !a.hidden } : a)) });
+  };
+
+  const moveArg = (id: string, dir: -1 | 1) => {
+    const idx = data.argumentos.findIndex((a) => a.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.argumentos.length) return;
+    const arr = [...data.argumentos];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ argumentos: arr });
+  };
+
+  const duplicateArg = (id: string) => {
+    const idx = data.argumentos.findIndex((a) => a.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.argumentos[idx], id: Date.now().toString() };
+    const arr = [...data.argumentos];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ argumentos: arr });
+  };
+
   const updateStep = (index: number, value: string) => {
     const steps = [...data.fechamentoSteps];
     steps[index] = value;
@@ -205,6 +228,50 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
 
   const removeAvaliacao = (id: string) => {
     onChange({ avaliacoes: data.avaliacoes.filter((a) => a.id !== id) });
+  };
+
+  const toggleAvHidden = (id: string) => {
+    onChange({ avaliacoes: data.avaliacoes.map((a) => (a.id === id ? { ...a, hidden: !a.hidden } : a)) });
+  };
+
+  const moveAv = (id: string, dir: -1 | 1) => {
+    const idx = data.avaliacoes.findIndex((a) => a.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.avaliacoes.length) return;
+    const arr = [...data.avaliacoes];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ avaliacoes: arr });
+  };
+
+  const duplicateAv = (id: string) => {
+    const idx = data.avaliacoes.findIndex((a) => a.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.avaliacoes[idx], id: Date.now().toString() };
+    const arr = [...data.avaliacoes];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ avaliacoes: arr });
+  };
+
+  const toggleMemberHidden = (id: string) => {
+    onChange({ team: data.team.map((m) => (m.id === id ? { ...m, hidden: !m.hidden } : m)) });
+  };
+
+  const moveMember = (id: string, dir: -1 | 1) => {
+    const idx = data.team.findIndex((m) => m.id === id);
+    const newIdx = idx + dir;
+    if (newIdx < 0 || newIdx >= data.team.length) return;
+    const arr = [...data.team];
+    [arr[idx], arr[newIdx]] = [arr[newIdx], arr[idx]];
+    onChange({ team: arr });
+  };
+
+  const duplicateMember = (id: string) => {
+    const idx = data.team.findIndex((m) => m.id === id);
+    if (idx === -1) return;
+    const clone = { ...data.team[idx], id: Date.now().toString() };
+    const arr = [...data.team];
+    arr.splice(idx + 1, 0, clone);
+    onChange({ team: arr });
   };
 
   const pageManagementBar = (page: ProposalPage, index: number) => (
@@ -358,10 +425,19 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
         return (
           <div className="space-y-3">
             {data.argumentos.map((arg, i) => (
-              <div key={arg.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
+              <div key={arg.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12, opacity: arg.hidden ? 0.4 : 1 }} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Argumento {i + 1}</span>
-                  <button onClick={() => removeArg(arg.id)} style={{ color: 'rgba(239,68,68,0.5)' }} className="p-1 transition-colors hover:opacity-100"><Trash2 size={11} /></button>
+                  <FieldControls
+                    onToggleVisible={() => toggleArgHidden(arg.id)}
+                    isVisible={!arg.hidden}
+                    onMoveUp={() => moveArg(arg.id, -1)}
+                    onMoveDown={() => moveArg(arg.id, 1)}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < data.argumentos.length - 1}
+                    onDuplicate={() => duplicateArg(arg.id)}
+                    onDelete={() => removeArg(arg.id)}
+                  />
                 </div>
                 <Input value={arg.argumento} onChange={(e) => updateArg(arg.id, "argumento", e.target.value)} className={inputClass} placeholder="Argumento" />
                 <Input value={arg.fundamento} onChange={(e) => updateArg(arg.id, "fundamento", e.target.value)} className={inputClass} placeholder="Fundamento" />
@@ -400,37 +476,48 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
               return (
                 <div key={cat} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
                   <h4 style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>{catLabel}</h4>
-                  {members.map((m) => (
-                    <div key={m.id} className="flex items-center gap-2 rounded-lg p-2" style={{ background: '#0a1628' }}>
-                      <div
-                        className="w-9 h-9 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
-                        style={{ border: '1px solid rgba(201,168,76,0.25)' }}
-                        onClick={() => !uploadingMembers[m.id] && fileInputRefs.current[m.id]?.click()}
-                      >
-                        {uploadingMembers[m.id] ? (
-                          <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
-                            <Loader2 size={14} className="animate-spin" style={{ color: '#c9a84c' }} />
-                          </div>
-                        ) : m.photo ? (
-                          <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
-                            <User size={14} color="rgba(255,255,255,0.3)" />
-                          </div>
-                        )}
-                        <input
-                          ref={(el) => { fileInputRefs.current[m.id] = el; }}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => { const file = e.target.files?.[0]; if (file) handlePhotoUpload(m.id, file); }}
-                        />
+                  {members.map((m, mi) => (
+                    <div key={m.id} className="rounded-lg p-2 space-y-1" style={{ background: '#0a1628', opacity: m.hidden ? 0.4 : 1 }}>
+                      <FieldControls
+                        onToggleVisible={() => toggleMemberHidden(m.id)}
+                        isVisible={!m.hidden}
+                        onMoveUp={() => moveMember(m.id, -1)}
+                        onMoveDown={() => moveMember(m.id, 1)}
+                        canMoveUp={mi > 0}
+                        canMoveDown={mi < members.length - 1}
+                        onDuplicate={() => duplicateMember(m.id)}
+                        onDelete={() => removeMember(m.id)}
+                      />
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-9 h-9 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
+                          style={{ border: '1px solid rgba(201,168,76,0.25)' }}
+                          onClick={() => !uploadingMembers[m.id] && fileInputRefs.current[m.id]?.click()}
+                        >
+                          {uploadingMembers[m.id] ? (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
+                              <Loader2 size={14} className="animate-spin" style={{ color: '#c9a84c' }} />
+                            </div>
+                          ) : m.photo ? (
+                            <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
+                              <User size={14} color="rgba(255,255,255,0.3)" />
+                            </div>
+                          )}
+                          <input
+                            ref={(el) => { fileInputRefs.current[m.id] = el; }}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => { const file = e.target.files?.[0]; if (file) handlePhotoUpload(m.id, file); }}
+                          />
+                        </div>
+                        <div className="flex-1 space-y-1 min-w-0">
+                          <Input value={m.name} onChange={(e) => updateMember(m.id, "name", e.target.value)} className={`${inputClass} h-6 text-[11px]`} />
+                          <Input value={m.role} onChange={(e) => updateMember(m.id, "role", e.target.value)} className={`${inputClass} h-6 text-[11px]`} placeholder="Cargo" />
+                        </div>
                       </div>
-                      <div className="flex-1 space-y-1 min-w-0">
-                        <Input value={m.name} onChange={(e) => updateMember(m.id, "name", e.target.value)} className={`${inputClass} h-6 text-[11px]`} />
-                        <Input value={m.role} onChange={(e) => updateMember(m.id, "role", e.target.value)} className={`${inputClass} h-6 text-[11px]`} placeholder="Cargo" />
-                      </div>
-                      <button onClick={() => removeMember(m.id)} className="p-1 transition-colors" style={{ color: 'rgba(239,68,68,0.4)' }}><Trash2 size={11} /></button>
                     </div>
                   ))}
                   <button onClick={() => addMember(cat)} className="flex items-center gap-1 text-[11px] transition-colors" style={{ color: 'rgba(201,168,76,0.6)' }}>
@@ -452,10 +539,19 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
               <Input type="number" value={data.totalAvaliacoes} onChange={(e) => onChange({ totalAvaliacoes: parseInt(e.target.value) || 0 })} className={inputClass} />
             </Field>
             {data.avaliacoes.map((av, i) => (
-              <div key={av.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-2">
+              <div key={av.id} style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12, opacity: av.hidden ? 0.4 : 1 }} className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span style={{ fontSize: 10, fontWeight: 700, color: '#c9a84c', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Avaliação {i + 1}</span>
-                  <button onClick={() => removeAvaliacao(av.id)} style={{ color: 'rgba(239,68,68,0.5)' }} className="p-1"><Trash2 size={11} /></button>
+                  <FieldControls
+                    onToggleVisible={() => toggleAvHidden(av.id)}
+                    isVisible={!av.hidden}
+                    onMoveUp={() => moveAv(av.id, -1)}
+                    onMoveDown={() => moveAv(av.id, 1)}
+                    canMoveUp={i > 0}
+                    canMoveDown={i < data.avaliacoes.length - 1}
+                    onDuplicate={() => duplicateAv(av.id)}
+                    onDelete={() => removeAvaliacao(av.id)}
+                  />
                 </div>
                 <Input value={av.nome} onChange={(e) => updateAvaliacao(av.id, "nome", e.target.value)} className={inputClass} placeholder="Nome" />
                 <Input type="number" min="1" max="5" value={av.nota} onChange={(e) => updateAvaliacao(av.id, "nota", parseInt(e.target.value) || 5)} className={inputClass} placeholder="Nota (1-5)" />

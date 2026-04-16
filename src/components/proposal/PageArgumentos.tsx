@@ -1,15 +1,24 @@
 import React from "react";
 import { ProposalData } from "./types";
+import InlineEditable from "./InlineEditable";
 
 interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
   bgColor?: string;
+  onChange?: (updates: Partial<ProposalData>) => void;
 }
 
-const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
+const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = { small: 12, medium: 13, large: 15 }[data.textSize] || 13;
+  const up = onChange || (() => {});
+
+  const updateArg = (id: string, field: string, value: string) => {
+    up({ argumentos: data.argumentos.map((a) => (a.id === id ? { ...a, [field]: value } : a)) });
+  };
+
+  const visibleArgs = data.argumentos.filter((a) => !(a as any).hidden);
 
   return (
     <div className="slide watermark-light" data-slide style={{ padding: '48px 64px', backgroundColor: bgColor || '#f5f0e8' }}>
@@ -31,11 +40,17 @@ const PageArgumentos: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgCo
             </tr>
           </thead>
           <tbody>
-            {data.argumentos.map((arg, i) => (
+            {visibleArgs.map((arg, i) => (
               <tr key={arg.id} style={{ background: i % 2 === 0 ? '#f5f0e8' : '#efe9dc', borderBottom: '1px solid rgba(26,58,92,0.06)' }}>
-                <td style={{ padding: '12px 16px', fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, fontWeight: 500 }}>{arg.argumento}</td>
-                <td style={{ padding: '12px 16px', fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz }}>{arg.fundamento}</td>
-                <td style={{ padding: '12px 16px', fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.7)', fontSize: sz, fontStyle: 'italic' }}>{arg.observacao}</td>
+                <td style={{ padding: '12px 16px' }}>
+                  <InlineEditable value={arg.argumento} onChange={(v) => updateArg(arg.id, 'argumento', v)} style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, fontWeight: 500, display: 'block' }} />
+                </td>
+                <td style={{ padding: '12px 16px' }}>
+                  <InlineEditable value={arg.fundamento} onChange={(v) => updateArg(arg.id, 'fundamento', v)} style={{ fontFamily: "'Lato', sans-serif", color: '#1a3a5c', fontSize: sz, display: 'block' }} />
+                </td>
+                <td style={{ padding: '12px 16px' }}>
+                  <InlineEditable value={arg.observacao} onChange={(v) => updateArg(arg.id, 'observacao', v)} style={{ fontFamily: "'Lato', sans-serif", color: 'rgba(26,58,92,0.7)', fontSize: sz, fontStyle: 'italic', display: 'block' }} />
+                </td>
               </tr>
             ))}
           </tbody>

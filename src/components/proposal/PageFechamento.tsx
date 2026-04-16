@@ -1,17 +1,26 @@
 import React from "react";
 import { ProposalData } from "./types";
+import InlineEditable from "./InlineEditable";
 
 interface Props {
   data: ProposalData;
   textSizeClass: string;
   pageNumber: number;
   bgColor?: string;
+  onChange?: (updates: Partial<ProposalData>) => void;
 }
 
-const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor }) => {
+const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
   const sz = { small: 12, medium: 14, large: 16 }[data.textSize] || 14;
   const hasImage = !!data.fotoProximosPassos;
   const bg = bgColor || '#0d2b45';
+  const up = onChange || (() => {});
+
+  const updateStep = (index: number, value: string) => {
+    const steps = [...data.fechamentoSteps];
+    steps[index] = value;
+    up({ fechamentoSteps: steps });
+  };
 
   return (
     <div className="slide geometric-dark" data-slide style={{ display: 'flex', padding: 0, backgroundColor: bg }}>
@@ -32,15 +41,25 @@ const PageFechamento: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgCo
                 <div style={{ position: 'absolute', left: -34, top: 2, width: 22, height: 22, borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(201,168,76,0.3)' }}>
                   <span style={{ color: '#0d2b45', fontSize: 10, fontWeight: 700 }}>{i + 1}</span>
                 </div>
-                <p style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontSize: sz, lineHeight: 1.6 }}>{step}</p>
+                <InlineEditable
+                  tag="p"
+                  value={step}
+                  onChange={(v) => updateStep(i, v)}
+                  multiline
+                  style={{ fontFamily: "'Lato', sans-serif", color: '#ffffff', fontSize: sz, lineHeight: 1.6 }}
+                />
               </div>
             ))}
           </div>
 
           <div style={{ borderTop: '1px solid rgba(201,168,76,0.2)', paddingTop: 24, marginTop: 16 }}>
-            <p style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
-              {data.fechamentoCTA}
-            </p>
+            <InlineEditable
+              tag="p"
+              value={data.fechamentoCTA}
+              onChange={(v) => up({ fechamentoCTA: v })}
+              multiline
+              style={{ fontFamily: "'Playfair Display', serif", color: '#c9a84c', fontSize: 18, lineHeight: 1.6, fontStyle: 'italic', whiteSpace: 'pre-wrap' }}
+            />
           </div>
         </div>
 
