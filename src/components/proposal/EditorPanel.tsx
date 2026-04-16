@@ -732,13 +732,16 @@ const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
           {data.pages.map((page, index) => (
             <AccordionItem key={page.id} value={page.id} className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(201,168,76,0.1)', background: 'rgba(10,22,40,0.3)' }}>
               <AccordionTrigger className="px-3 py-2.5 text-sm hover:no-underline transition-colors" style={{ color: '#ffffff', fontFamily: "'Lato', sans-serif" }}>
-                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                  <span style={{ width: 20, height: 20, borderRadius: '50%', background: '#c9a84c', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0d2b45', fontWeight: 700, fontSize: 9, flexShrink: 0 }}>
+                <div className="flex items-center gap-2.5 flex-1 min-w-0" style={{ opacity: !page.visible ? 0.5 : 1, background: !page.visible ? 'rgba(192,57,43,0.05)' : 'transparent', borderRadius: 4, padding: '2px 4px' }}>
+                  <span style={{ width: 20, height: 20, borderRadius: '50%', background: page.visible ? '#c9a84c' : '#666', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0d2b45', fontWeight: 700, fontSize: 9, flexShrink: 0 }}>
                     {index + 1}
                   </span>
-                  <span className={`truncate text-xs ${!page.visible ? "opacity-30 line-through" : ""}`}>
+                  <span className="truncate text-xs" style={{ textDecoration: !page.visible ? 'line-through' : 'none', color: !page.visible ? '#888' : 'white' }}>
                     {PAGE_TYPE_LABELS[page.type]}
                   </span>
+                  {!page.visible && (
+                    <span style={{ color: '#c0392b', fontSize: 9, fontWeight: 700, fontFamily: "'Lato', sans-serif", letterSpacing: '0.05em', flexShrink: 0 }}>OCULTO</span>
+                  )}
                   {pageManagementBar(page, index)}
                 </div>
               </AccordionTrigger>
