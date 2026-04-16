@@ -730,6 +730,18 @@ ${processedSlides.join('\n')}
           <div style={{ fontSize: 13, opacity: 0.7 }}>Aguarde, isso pode levar alguns segundos</div>
         </div>
       )}
+      {isGeneratingHTML && (
+        <div data-pdf-exclude="true" style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(10,22,40,0.92)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#c9a84c', fontFamily: "'Lato', sans-serif",
+        }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>🌐</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Gerando HTML...</div>
+          <div style={{ fontSize: 13, opacity: 0.7 }}>Aguarde, convertendo imagens para base64</div>
+        </div>
+      )}
     </div>
   );
 };
