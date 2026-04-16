@@ -4,6 +4,7 @@ export interface TeamMember {
   role: string;
   photo: string | null;
   category: "gestao" | "juridico" | "administrativo";
+  hidden?: boolean;
 }
 
 export interface ArgumentRow {
@@ -11,6 +12,7 @@ export interface ArgumentRow {
   argumento: string;
   fundamento: string;
   observacao: string;
+  hidden?: boolean;
 }
 
 export interface Avaliacao {
@@ -18,6 +20,7 @@ export interface Avaliacao {
   nome: string;
   nota: number;
   texto: string;
+  hidden?: boolean;
 }
 
 export type PageType =
