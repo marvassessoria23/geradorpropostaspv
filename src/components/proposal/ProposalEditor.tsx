@@ -110,6 +110,7 @@ const ProposalEditor: React.FC = () => {
   const [previewScale, setPreviewScale] = useState(0.6);
   const [hoveredSlide, setHoveredSlide] = useState<string | null>(null);
   const [showTip, setShowTip] = useState(true);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -506,7 +507,7 @@ const ProposalEditor: React.FC = () => {
         </div>
       </div>
       {showTip && (
-        <div style={{
+        <div data-pdf-exclude="true" style={{
           position: 'fixed', bottom: 24, right: 24,
           background: '#0d2b45', border: '1px solid #c9a84c',
           color: 'white', padding: '12px 20px', borderRadius: 8,
@@ -515,6 +516,18 @@ const ProposalEditor: React.FC = () => {
           cursor: 'pointer',
         }} onClick={() => setShowTip(false)}>
           💡 Clique em qualquer texto no preview para editar diretamente
+        </div>
+      )}
+      {isGeneratingPDF && (
+        <div data-pdf-exclude="true" style={{
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: 'rgba(10,22,40,0.92)', backdropFilter: 'blur(4px)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#c9a84c', fontFamily: "'Lato', sans-serif",
+        }}>
+          <div style={{ fontSize: 56, marginBottom: 16 }}>⏳</div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>Gerando PDF...</div>
+          <div style={{ fontSize: 13, opacity: 0.7 }}>Aguarde, isso pode levar alguns segundos</div>
         </div>
       )}
     </div>
