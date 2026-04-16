@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { ProposalData, defaultProposalData, TeamMember, ArgumentRow, Avaliacao, ProposalPage, PageType, PAGE_TYPE_LABELS, DEFAULT_BG_COLORS } from "./types";
 import { supabase } from "@/integrations/supabase/client";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,12 +11,13 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import {
-  Plus, Trash2, User, Copy, ChevronUp, ChevronDown, Eye, EyeOff, Upload, Image, Palette, Star,
+  Plus, Trash2, User, Copy, ChevronUp, ChevronDown, Eye, EyeOff, Upload, Image, Palette, Star, Loader2,
 } from "lucide-react";
 
 interface Props {
   data: ProposalData;
   onChange: (updates: Partial<ProposalData>) => void;
+  onImageUpload: (fieldId: string, base64: string) => Promise<string>;
 }
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -32,15 +33,28 @@ const textareaClass = `${inputClass} min-h-[80px] resize-y`;
 const ImageUploadField: React.FC<{
   label: string;
   value: string | null;
-  onUpload: (base64: string) => void;
-  onClear: () => void;
-}> = ({ label, value, onUpload, onClear }) => {
+  fieldId: string;
+  onImageUpload: (fieldId: string, base64: string) => Promise<string>;
+  onUpdate: (url: string | null) => void;
+}> = ({ label, value, fieldId, onImageUpload, onUpdate }) => {
   const ref = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) onUpload(e.target.result as string);
+    reader.onload = async (e) => {
+      if (!e.target?.result) return;
+      const base64 = e.target.result as string;
+      setUploading(true);
+      try {
+        const url = await onImageUpload(fieldId, base64);
+        onUpdate(url);
+      } catch (err) {
+        console.error('Erro ao fazer upload:', err);
+        alert('Erro ao salvar imagem. Tente novamente.');
+      } finally {
+        setUploading(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -48,11 +62,16 @@ const ImageUploadField: React.FC<{
   return (
     <Field label={label}>
       <div className="space-y-2">
-        {value ? (
+        {uploading ? (
+          <div className="h-20 rounded-lg flex items-center justify-center" style={{ border: '1px solid rgba(201,168,76,0.2)', background: 'rgba(10,22,40,0.5)' }}>
+            <Loader2 size={20} className="animate-spin" style={{ color: '#c9a84c' }} />
+            <span style={{ color: 'rgba(201,168,76,0.7)', fontSize: 12, marginLeft: 8, fontFamily: "'Lato', sans-serif" }}>Enviando...</span>
+          </div>
+        ) : value ? (
           <div className="relative group">
             <img src={value} alt={label} className="w-full h-20 object-cover rounded-lg" style={{ border: '1px solid rgba(201,168,76,0.2)' }} />
             <button
-              onClick={onClear}
+              onClick={() => onUpdate(null)}
               className="absolute top-1 right-1 bg-red-500/80 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
             >
               <Trash2 size={10} />
@@ -84,8 +103,9 @@ const ImageUploadField: React.FC<{
   );
 };
 
-const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
+const EditorPanel: React.FC<Props> = ({ data, onChange, onImageUpload }) => {
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const [uploadingMembers, setUploadingMembers] = useState<Record<string, boolean>>({});
 
   const addPage = (type: PageType) => {
     const newPage: ProposalPage = { id: `p-${Date.now()}`, type, visible: true };
@@ -122,10 +142,21 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
     onChange({ team: data.team.map((m) => (m.id === id ? { ...m, [field]: value } : m)) });
   };
 
-  const handlePhotoUpload = (id: string, file: File) => {
+  const handlePhotoUpload = async (id: string, file: File) => {
     const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) updateMember(id, "photo", e.target.result as string);
+    reader.onload = async (e) => {
+      if (!e.target?.result) return;
+      const base64 = e.target.result as string;
+      setUploadingMembers(prev => ({ ...prev, [id]: true }));
+      try {
+        const url = await onImageUpload(`team_${id}`, base64);
+        updateMember(id, "photo", url);
+      } catch (err) {
+        console.error('Erro ao fazer upload da foto:', err);
+        alert('Erro ao salvar foto. Tente novamente.');
+      } finally {
+        setUploadingMembers(prev => ({ ...prev, [id]: false }));
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -213,14 +244,16 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
             <ImageUploadField
               label="Imagem da Capa"
               value={data.coverImage}
-              onUpload={(v) => onChange({ coverImage: v })}
-              onClear={() => onChange({ coverImage: null })}
+              fieldId="coverImage"
+              onImageUpload={onImageUpload}
+              onUpdate={(url) => onChange({ coverImage: url })}
             />
             <ImageUploadField
               label="Logo do Escritório"
               value={data.logoImage}
-              onUpload={(v) => onChange({ logoImage: v })}
-              onClear={() => onChange({ logoImage: null })}
+              fieldId="logoImage"
+              onImageUpload={onImageUpload}
+              onUpdate={(url) => onChange({ logoImage: url })}
             />
             <div style={{ border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: 12 }} className="space-y-3">
               <h4 style={{ fontSize: 10, fontWeight: 700, color: 'rgba(201,168,76,0.8)', textTransform: 'uppercase', letterSpacing: '0.15em', display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -351,8 +384,9 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
             <ImageUploadField
               label="Foto Lateral"
               value={data.fotoSobre}
-              onUpload={(v) => onChange({ fotoSobre: v })}
-              onClear={() => onChange({ fotoSobre: null })}
+              fieldId="fotoSobre"
+              onImageUpload={onImageUpload}
+              onUpdate={(url) => onChange({ fotoSobre: url })}
             />
           </div>
         );
@@ -371,9 +405,13 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
                       <div
                         className="w-9 h-9 rounded-full overflow-hidden cursor-pointer flex-shrink-0"
                         style={{ border: '1px solid rgba(201,168,76,0.25)' }}
-                        onClick={() => fileInputRefs.current[m.id]?.click()}
+                        onClick={() => !uploadingMembers[m.id] && fileInputRefs.current[m.id]?.click()}
                       >
-                        {m.photo ? (
+                        {uploadingMembers[m.id] ? (
+                          <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
+                            <Loader2 size={14} className="animate-spin" style={{ color: '#c9a84c' }} />
+                          </div>
+                        ) : m.photo ? (
                           <img src={m.photo} alt={m.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(13,43,69,0.6)' }}>
@@ -456,8 +494,9 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
             <ImageUploadField
               label="Imagem Lateral"
               value={data.fotoProximosPassos}
-              onUpload={(v) => onChange({ fotoProximosPassos: v })}
-              onClear={() => onChange({ fotoProximosPassos: null })}
+              fieldId="fotoProximosPassos"
+              onImageUpload={onImageUpload}
+              onUpdate={(url) => onChange({ fotoProximosPassos: url })}
             />
             <Field label="Passos">
               <div className="space-y-2">
@@ -483,8 +522,9 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
             <ImageUploadField
               label="Foto Lateral"
               value={data.fotoContato}
-              onUpload={(v) => onChange({ fotoContato: v })}
-              onClear={() => onChange({ fotoContato: null })}
+              fieldId="fotoContato"
+              onImageUpload={onImageUpload}
+              onUpdate={(url) => onChange({ fotoContato: url })}
             />
             <Field label="Telefone"><Input value={data.telefone} onChange={(e) => onChange({ telefone: e.target.value })} className={inputClass} /></Field>
             <Field label="Instagram 1"><Input value={data.instagram1} onChange={(e) => onChange({ instagram1: e.target.value })} className={inputClass} /></Field>
@@ -629,16 +669,18 @@ const EditorPanel: React.FC<Props> = ({ data, onChange }) => {
           <button
             onClick={async () => {
               if (window.confirm('Tem certeza? Todos os dados e imagens serão perdidos.')) {
-                // Clear images table
-                const { data: imgs } = await (supabase as any)
-                  .from('proposta_imagens')
-                  .select('id');
-                if (imgs && imgs.length > 0) {
-                  await Promise.all(
-                    (imgs as any[]).map((img: any) =>
-                      (supabase as any).from('proposta_imagens').delete().eq('id', img.id)
-                    )
-                  );
+                // Delete all files from storage bucket
+                try {
+                  const { data: files } = await supabase.storage
+                    .from('proposta-imagens')
+                    .list();
+                  if (files && files.length > 0) {
+                    await supabase.storage
+                      .from('proposta-imagens')
+                      .remove(files.map(f => f.name));
+                  }
+                } catch (e) {
+                  console.error('Erro ao limpar storage:', e);
                 }
                 // Reset config
                 await (supabase as any)

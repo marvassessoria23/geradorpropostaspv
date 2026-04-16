@@ -26,101 +26,41 @@ const IMAGE_FIELDS: (keyof ProposalData)[] = [
   'coverImage', 'logoImage', 'advogadoPhoto', 'fotoSobre', 'fotoProximosPassos', 'fotoContato'
 ];
 
-// Save a single image to proposta_imagens
-const saveImage = async (id: string, base64: string) => {
-  const { error } = await (supabase as any)
-    .from('proposta_imagens')
-    .upsert({ id, base64, updated_at: new Date().toISOString() });
-  if (error) console.error('Erro ao salvar imagem:', id, error);
-};
+// Upload a base64 image to Supabase Storage and return the public URL
+const uploadToStorage = async (id: string, base64: string): Promise<string> => {
+  const response = await fetch(base64);
+  const blob = await response.blob();
+  const ext = blob.type.split('/')[1] || 'jpg';
+  const fileName = `${id}.${ext}`;
 
-// Delete a single image from proposta_imagens
-const deleteImage = async (id: string) => {
-  await (supabase as any).from('proposta_imagens').delete().eq('id', id);
-};
+  const { error } = await supabase.storage
+    .from('proposta-imagens')
+    .upload(fileName, blob, { upsert: true, contentType: blob.type });
 
-// Load a single image from proposta_imagens
-const loadImage = async (id: string): Promise<string | null> => {
-  const { data, error } = await (supabase as any)
-    .from('proposta_imagens')
-    .select('base64')
-    .eq('id', id)
-    .maybeSingle();
-  if (error || !data) return null;
-  return data.base64;
-};
-
-// Load only the image IDs (not data) to know which exist
-const loadImageIds = async (): Promise<string[]> => {
-  const { data, error } = await (supabase as any)
-    .from('proposta_imagens')
-    .select('id');
-  if (error || !data) return [];
-  return (data as any[]).map((row: any) => row.id);
-};
-
-// Strip base64 from data, replacing with img: references
-const sanitizeForSave = (proposalData: ProposalData): ProposalData => {
-  const sanitized = { ...proposalData };
-
-  // Replace top-level image fields
-  for (const field of IMAGE_FIELDS) {
-    const val = sanitized[field] as string | null;
-    if (val && typeof val === 'string' && val.startsWith('data:')) {
-      (sanitized as any)[field] = `img:${field}`;
-    }
+  if (error) {
+    console.error('Erro no upload:', id, error);
+    throw error;
   }
 
-  // Replace team member photos
-  sanitized.team = sanitized.team.map(m => ({
-    ...m,
-    photo: m.photo && m.photo.startsWith('data:') ? `img:team_${m.id}` : m.photo
-  }));
+  const { data: urlData } = supabase.storage
+    .from('proposta-imagens')
+    .getPublicUrl(fileName);
 
-  return sanitized;
+  // Add cache-buster to avoid stale CDN cache
+  return `${urlData.publicUrl}?t=${Date.now()}`;
 };
 
-// Extract all base64 images that need saving
-const extractImages = (proposalData: ProposalData): Record<string, string> => {
-  const images: Record<string, string> = {};
+// Check if a value is a base64 data URL
+const isBase64 = (val: string | null): boolean =>
+  !!val && val.startsWith('data:');
 
-  for (const field of IMAGE_FIELDS) {
-    const val = proposalData[field] as string | null;
-    if (val && typeof val === 'string' && val.startsWith('data:')) {
-      images[field as string] = val;
-    }
-  }
+// Check if a value is an old img: reference from the legacy system
+const isImgRef = (val: string | null): boolean =>
+  !!val && val.startsWith('img:');
 
-  for (const m of proposalData.team) {
-    if (m.photo && m.photo.startsWith('data:')) {
-      images[`team_${m.id}`] = m.photo;
-    }
-  }
-
-  return images;
-};
-
-// Rehydrate data with images from the images table
-const rehydrateWithImages = (proposalData: ProposalData, images: Record<string, string>): ProposalData => {
-  const hydrated = { ...proposalData };
-
-  for (const field of IMAGE_FIELDS) {
-    const val = hydrated[field] as string | null;
-    if (val && typeof val === 'string' && val.startsWith('img:')) {
-      const key = val.replace('img:', '');
-      (hydrated as any)[field] = images[key] || null;
-    }
-  }
-
-  hydrated.team = hydrated.team.map(m => ({
-    ...m,
-    photo: m.photo && m.photo.startsWith('img:')
-      ? images[m.photo.replace('img:', '')] || null
-      : m.photo
-  }));
-
-  return hydrated;
-};
+// Check if a value needs migration (base64 or img: ref)
+const needsMigration = (val: string | null): boolean =>
+  isBase64(val) || isImgRef(val);
 
 const ProposalEditor: React.FC = () => {
   const [data, setData] = useState<ProposalData>(defaultProposalData);
@@ -132,7 +72,95 @@ const ProposalEditor: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialLoad = useRef(true);
-  const prevImagesRef = useRef<Record<string, string>>({});
+
+  // Upload image to storage, update data, return URL
+  const handleImageUpload = useCallback(async (fieldId: string, base64: string): Promise<string> => {
+    const url = await uploadToStorage(fieldId, base64);
+    return url;
+  }, []);
+
+  // Migrate any legacy base64/img: references to Storage URLs
+  const migrateImages = useCallback(async (proposalData: ProposalData): Promise<ProposalData> => {
+    const migrated = { ...proposalData };
+    let changed = false;
+
+    // Migrate top-level image fields
+    for (const field of IMAGE_FIELDS) {
+      const val = migrated[field] as string | null;
+      if (isBase64(val)) {
+        try {
+          const url = await uploadToStorage(field as string, val);
+          (migrated as any)[field] = url;
+          changed = true;
+        } catch { /* keep original */ }
+      } else if (isImgRef(val)) {
+        // Old img: reference — image data is in proposta_imagens table, try to load and migrate
+        const refId = val.replace('img:', '');
+        try {
+          const { data: row } = await (supabase as any)
+            .from('proposta_imagens')
+            .select('base64')
+            .eq('id', refId)
+            .maybeSingle();
+          if (row?.base64) {
+            const url = await uploadToStorage(field as string, row.base64);
+            (migrated as any)[field] = url;
+            changed = true;
+          } else {
+            (migrated as any)[field] = null;
+            changed = true;
+          }
+        } catch {
+          (migrated as any)[field] = null;
+          changed = true;
+        }
+      }
+    }
+
+    // Migrate team member photos
+    migrated.team = await Promise.all(
+      migrated.team.map(async (m) => {
+        if (isBase64(m.photo)) {
+          try {
+            const url = await uploadToStorage(`team_${m.id}`, m.photo);
+            changed = true;
+            return { ...m, photo: url };
+          } catch { return m; }
+        } else if (isImgRef(m.photo)) {
+          const refId = m.photo.replace('img:', '');
+          try {
+            const { data: row } = await (supabase as any)
+              .from('proposta_imagens')
+              .select('base64')
+              .eq('id', refId)
+              .maybeSingle();
+            if (row?.base64) {
+              const url = await uploadToStorage(`team_${m.id}`, row.base64);
+              changed = true;
+              return { ...m, photo: url };
+            }
+          } catch { /* ignore */ }
+          changed = true;
+          return { ...m, photo: null };
+        }
+        return m;
+      })
+    );
+
+    // If we migrated anything, save the updated config immediately
+    if (changed) {
+      console.log('Imagens migradas para Storage, salvando config...');
+      await (supabase as any)
+        .from('proposta_config')
+        .upsert({
+          id: 'config_global',
+          data: migrated,
+          updated_at: new Date().toISOString()
+        });
+    }
+
+    return migrated;
+  }, []);
 
   // Load from Supabase on mount
   useEffect(() => {
@@ -140,7 +168,6 @@ const ProposalEditor: React.FC = () => {
       try {
         console.log('Iniciando carregamento...');
 
-        // Load config from Supabase
         const { data: row, error } = await (supabase as any)
           .from('proposta_config')
           .select('data')
@@ -150,38 +177,18 @@ const ProposalEditor: React.FC = () => {
         console.log('Config carregada:', { error, hasData: !!row?.data });
 
         if (!error && row?.data && typeof row.data === 'object' && Object.keys(row.data).length > 0) {
-          const proposalData = row.data as ProposalData;
+          let proposalData = row.data as ProposalData;
 
-          // Find which image references need loading
-          const imageRefs: string[] = [];
-          for (const field of IMAGE_FIELDS) {
-            const val = (proposalData as any)[field] as string | null;
-            if (val && typeof val === 'string' && val.startsWith('img:')) {
-              imageRefs.push(val.replace('img:', ''));
-            }
-          }
-          for (const m of proposalData.team || []) {
-            if (m.photo && m.photo.startsWith('img:')) {
-              imageRefs.push(m.photo.replace('img:', ''));
-            }
+          // Check if any images need migration from base64/img: to Storage URLs
+          const hasLegacy = IMAGE_FIELDS.some(f => needsMigration((proposalData as any)[f])) ||
+            (proposalData.team || []).some(m => needsMigration(m.photo));
+
+          if (hasLegacy) {
+            console.log('Detectadas imagens legadas, migrando para Storage...');
+            proposalData = await migrateImages(proposalData);
           }
 
-          console.log('Imagens para carregar:', imageRefs);
-
-          // Load each image individually (avoids timeout from loading all at once)
-          const images: Record<string, string> = {};
-          await Promise.all(
-            imageRefs.map(async (id) => {
-              const base64 = await loadImage(id);
-              if (base64) images[id] = base64;
-            })
-          );
-
-          console.log('Imagens carregadas:', Object.keys(images).length);
-
-          const hydrated = rehydrateWithImages(proposalData, images);
-          setData(hydrated);
-          prevImagesRef.current = extractImages(hydrated);
+          setData(proposalData);
         }
       } catch (e) {
         console.error('Erro ao carregar dados:', e);
@@ -191,39 +198,13 @@ const ProposalEditor: React.FC = () => {
       }
     };
     loadData();
-  }, []);
+  }, [migrateImages]);
 
   const updateData = useCallback((updates: Partial<ProposalData>) => {
     setData((prev) => ({ ...prev, ...updates }));
   }, []);
 
-  // Save images immediately when they change (not debounced)
-  const saveImagesImmediately = useCallback(async (newData: ProposalData) => {
-    const currentImages = extractImages(newData);
-    const prevImages = prevImagesRef.current;
-
-    // Find new/changed images and save them
-    const savePromises: Promise<void>[] = [];
-    for (const [id, b64] of Object.entries(currentImages)) {
-      if (prevImages[id] !== b64) {
-        savePromises.push(saveImage(id, b64));
-      }
-    }
-
-    // Find deleted images
-    for (const id of Object.keys(prevImages)) {
-      if (!currentImages[id]) {
-        savePromises.push(deleteImage(id));
-      }
-    }
-
-    if (savePromises.length > 0) {
-      await Promise.all(savePromises);
-      prevImagesRef.current = currentImages;
-    }
-  }, []);
-
-  // Auto-save to Supabase with 1s debounce
+  // Auto-save to Supabase with 1s debounce — JSON is lightweight now (URLs, not base64)
   useEffect(() => {
     if (isInitialLoad.current) return;
 
@@ -233,16 +214,11 @@ const ProposalEditor: React.FC = () => {
       try {
         setSaveStatus('saving');
 
-        // Save images first (immediately)
-        await saveImagesImmediately(data);
-
-        // Save config without base64
-        const sanitized = sanitizeForSave(data);
         const { error } = await (supabase as any)
           .from('proposta_config')
           .upsert({
             id: 'config_global',
-            data: sanitized,
+            data: data,
             updated_at: new Date().toISOString()
           });
 
@@ -257,20 +233,6 @@ const ProposalEditor: React.FC = () => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [data, saveImagesImmediately]);
-
-  // Backup only non-image config to localStorage on beforeunload
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      try {
-        const sanitized = sanitizeForSave(data);
-        localStorage.setItem('proposta_backup', JSON.stringify(sanitized));
-      } catch {
-        // Ignore quota errors
-      }
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [data]);
 
   useEffect(() => {
@@ -372,7 +334,7 @@ const ProposalEditor: React.FC = () => {
         {/* Editor Panel */}
         {panelOpen && (
           <div className="no-print" style={{ width: 380, flexShrink: 0, borderRight: '1px solid rgba(201,168,76,0.08)', overflow: 'hidden', background: '#0f1f33' }}>
-            <EditorPanel data={data} onChange={updateData} />
+            <EditorPanel data={data} onChange={updateData} onImageUpload={handleImageUpload} />
           </div>
         )}
 
