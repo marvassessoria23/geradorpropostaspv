@@ -414,8 +414,25 @@ const ProposalEditor: React.FC = () => {
     }
   };
 
-  const generateHTML = () => {
+  const generateHTML = async () => {
+    setIsGeneratingHTML(true);
     try {
+      const urlToBase64 = async (url: string): Promise<string> => {
+        if (!url || url.startsWith('data:')) return url;
+        try {
+          const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+          const blob = await response.blob();
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch {
+          return url;
+        }
+      };
+
       // Coletar todos os estilos da página atual (try/catch por sheet para CORS)
       const styles = Array.from(document.styleSheets)
         .map((sheet) => {
@@ -433,24 +450,56 @@ const ProposalEditor: React.FC = () => {
 
       if (slides.length === 0) {
         alert('Nenhum slide encontrado.');
+        setIsGeneratingHTML(false);
         return;
       }
 
-      const slidesHTML = slides
-        .map((slide) => {
+      const processedSlides = await Promise.all(
+        slides.map(async (slide) => {
           const clone = slide.cloneNode(true) as HTMLElement;
           clone.querySelectorAll('button, [data-pdf-exclude]').forEach((el) => el.remove());
-          clone.style.transform = 'none';
-          clone.style.width = '1280px';
-          clone.style.height = '720px';
-          clone.style.minHeight = '720px';
-          clone.style.maxHeight = '720px';
-          clone.style.overflow = 'hidden';
-          clone.style.marginBottom = '0';
-          clone.style.pageBreakAfter = 'always';
+
+          // Converter <img src> para base64
+          await Promise.all(
+            Array.from(clone.querySelectorAll('img')).map(async (img) => {
+              if (img.src && !img.src.startsWith('data:')) {
+                img.src = await urlToBase64(img.src);
+              }
+            })
+          );
+
+          // Converter background-image inline para base64
+          await Promise.all(
+            (Array.from(clone.querySelectorAll('*')) as HTMLElement[]).map(async (el) => {
+              const bg = el.style?.backgroundImage;
+              if (bg && bg.includes('url(') && !bg.includes('data:')) {
+                const match = bg.match(/url\(['"]?([^'")\s]+)['"]?\)/);
+                if (match?.[1]) {
+                  const b64 = await urlToBase64(match[1]);
+                  el.style.backgroundImage = `url("${b64}")`;
+                }
+              }
+            })
+          );
+
+          clone.style.cssText = `
+            width: 1280px !important;
+            height: 720px !important;
+            min-height: 720px !important;
+            max-height: 720px !important;
+            overflow: hidden !important;
+            transform: none !important;
+            position: relative !important;
+            page-break-after: always !important;
+            break-after: page !important;
+            display: block !important;
+            box-sizing: border-box !important;
+            margin: 0 auto 4px auto !important;
+          `;
+
           return clone.outerHTML;
         })
-        .join('\n');
+      );
 
       const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -472,7 +521,7 @@ const ProposalEditor: React.FC = () => {
       overflow: hidden !important;
       display: block !important;
       position: relative !important;
-      margin: 0 auto 2px auto !important;
+      margin: 0 auto 4px auto !important;
       transform: none !important;
     }
     @media print {
@@ -485,7 +534,7 @@ const ProposalEditor: React.FC = () => {
   </style>
 </head>
 <body>
-${slidesHTML}
+${processedSlides.join('\n')}
 </body>
 </html>`;
 
@@ -501,6 +550,8 @@ ${slidesHTML}
     } catch (error) {
       console.error('Erro ao gerar HTML:', error);
       alert('Erro ao gerar HTML: ' + (error as Error).message);
+    } finally {
+      setIsGeneratingHTML(false);
     }
   };
 
