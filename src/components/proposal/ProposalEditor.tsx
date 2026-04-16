@@ -323,24 +323,28 @@ const ProposalEditor: React.FC = () => {
 
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
-        const width = slide.scrollWidth || slide.offsetWidth || 1280;
-        const height = slide.scrollHeight || slide.offsetHeight || 720;
 
         const dataUrl = await toPng(slide, {
-          width,
-          height,
+          width: 1280,
+          height: 720,
           style: {
             transform: 'none',
             transformOrigin: 'top left',
-            margin: '0',
+            width: '1280px',
+            height: '720px',
+            minHeight: '720px',
+            maxHeight: '720px',
+            overflow: 'hidden',
+            position: 'relative',
           },
-          pixelRatio: 2,
+          pixelRatio: 1.5,
           skipFonts: false,
           fetchRequestInit: {
             mode: 'cors' as RequestMode,
             cache: 'no-cache' as RequestCache,
           },
           filter: (node: HTMLElement) => {
+            if (!node) return true;
             if (node.tagName === 'BUTTON') return false;
             if (node.classList?.contains?.('slide-controls')) return false;
             if (node.classList?.contains?.('slide-hover-controls')) return false;
