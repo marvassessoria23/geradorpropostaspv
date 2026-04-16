@@ -251,7 +251,11 @@ const ProposalEditor: React.FC = () => {
   const textSizeClass = TEXT_SIZE_MAP[data.textSize];
 
   const generatePDF = () => {
-    window.print();
+    document.body.classList.add('printing');
+    setTimeout(() => {
+      window.print();
+      document.body.classList.remove('printing');
+    }, 500);
   };
 
   if (isLoading) {
