@@ -741,7 +741,7 @@ const ProposalEditor: React.FC = () => {
                 <div
                   key={page.id}
                   data-proposal-page
-                  className={`slide-wrapper ${data.viewMode === "pages" && page.type !== "estrategia" ? "slide-shadow" : ""}`}
+                  className={`slide-wrapper ${data.viewMode === "pages" && page.type !== "estrategia" && page.type !== "diagnostico" && page.type !== "sobre" ? "slide-shadow" : ""}`}
                   style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}
                   onMouseEnter={() => setHoveredSlide(page.id)}
                   onMouseLeave={() => setHoveredSlide(null)}
