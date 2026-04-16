@@ -415,7 +415,7 @@ const ProposalEditor: React.FC = () => {
         <div ref={containerRef} className="print-area" style={{ flex: 1, overflowY: 'auto', padding: 32, background: 'linear-gradient(135deg, #0a1628 0%, #0d1b2a 50%, #0f1f33 100%)' }}>
           <div
             ref={previewRef}
-            className="preview-wrapper"
+            className="preview-scale-wrapper"
             style={{
               transformOrigin: 'top center',
               transform: `scale(${previewScale})`,
