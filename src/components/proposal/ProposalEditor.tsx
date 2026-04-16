@@ -62,12 +62,51 @@ const isImgRef = (val: string | null): boolean =>
 const needsMigration = (val: string | null): boolean =>
   isBase64(val) || isImgRef(val);
 
+// Check if a slide has any visible content
+const slideHasContent = (page: { type: PageType }, data: ProposalData): boolean => {
+  const hf = data.hiddenFields || {};
+  const v = (key: string) => {
+    const val = (data as any)[key];
+    return val && String(val).trim() !== '' && !hf[key];
+  };
+  switch (page.type) {
+    case 'cover': return true;
+    case 'diagnostico':
+      return v('diagnosticoTitle') || v('diagnosticoGreeting') || v('diagnosticoIntro') ||
+        v('diagnosticoBody') || v('diagnosticoJurisprudencia') || v('diagnosticoConclusao');
+    case 'estrategia':
+      return v('estrategiaIntro') || v('movimento1Title') || v('movimento1Intro') ||
+        v('movimento1Item1') || v('movimento1Item2') || v('movimento1Item3') ||
+        v('movimento1Resultado') || v('movimento2Title') || v('movimento2Consignacao') ||
+        v('movimento2Obrigacao') || v('movimento2Pedidos') || v('movimento2Observacoes') ||
+        v('movimento3Title') || v('movimento3Body');
+    case 'argumentos':
+      return (data.argumentos || []).some(a => !a.hidden && (a.argumento?.trim() || a.fundamento?.trim() || a.observacao?.trim()));
+    case 'sobre':
+      return v('sobreTitle') || v('sobreText1') || v('sobreText2') || v('sobreText3');
+    case 'equipe':
+      return (data.team || []).some(t => !t.hidden);
+    case 'avaliacoes':
+      return (data.avaliacoes || []).some(a => !a.hidden);
+    case 'investimento':
+      return v('honorarioAntecipado1') || v('honorarioAntecipado1Desc') ||
+        v('honorarioAntecipado2') || v('honorarioAntecipado2Desc') ||
+        v('honorarioExito1') || v('honorarioExito2') || v('parcelamento') || v('validadeProposta');
+    case 'fechamento':
+      return (data.fechamentoSteps || []).some(s => s?.trim()) || v('fechamentoCTA');
+    case 'contato':
+      return v('telefone') || v('instagram1') || v('website') || v('contatoTexto') || v('contatoSlogan');
+    default: return true;
+  }
+};
+
 const ProposalEditor: React.FC = () => {
   const [data, setData] = useState<ProposalData>(defaultProposalData);
   const [isLoading, setIsLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const [panelOpen, setPanelOpen] = useState(true);
   const [previewScale, setPreviewScale] = useState(0.6);
+  const [hoveredSlide, setHoveredSlide] = useState<string | null>(null);
   const [showTip, setShowTip] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -273,8 +312,12 @@ const ProposalEditor: React.FC = () => {
     );
   }
 
-  const visiblePages = data.pages.filter((p) => p.visible);
+  const visiblePages = data.pages.filter((p) => p.visible && slideHasContent(p, data));
   let globalPageCounter = 0;
+
+  const togglePageVisibility = (pageId: string) => {
+    updateData({ pages: data.pages.map((p) => p.id === pageId ? { ...p, visible: !p.visible } : p) });
+  };
 
   const renderPage = (pageType: PageType, pageNumber: number, bgColor: string) => {
     switch (pageType) {
@@ -371,36 +414,31 @@ const ProposalEditor: React.FC = () => {
               }
 
               const slideContent = renderPage(page.type, currentPageNum, bgColor);
-              const toggleBtn = (
-                <div className="slide-controls" style={{
-                  position: 'absolute', top: 8, right: 8, zIndex: 100,
-                  opacity: 0, transition: 'opacity 0.2s',
-                }}>
-                  <button
-                    onClick={() => updateData({ pages: data.pages.map((p) => p.id === page.id ? { ...p, visible: !p.visible } : p) })}
-                    style={{
-                      background: 'rgba(0,0,0,0.6)', border: '1px solid #c9a84c',
-                      color: '#c9a84c', borderRadius: 4, padding: '4px 8px',
-                      cursor: 'pointer', fontSize: 11, fontFamily: "'Lato', sans-serif",
-                    }}
-                  >
-                    🙈 Ocultar slide
-                  </button>
-                </div>
-              );
-
-              if (page.type === "estrategia") {
-                return (
-                  <div key={page.id} className="slide-wrapper" style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}>
-                    {toggleBtn}
-                    {slideContent}
-                  </div>
-                );
-              }
+              const isHovered = hoveredSlide === page.id;
 
               return (
-                <div key={page.id} data-proposal-page className={`slide-wrapper ${data.viewMode === "pages" ? "slide-shadow" : ""}`} style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}>
-                  {toggleBtn}
+                <div
+                  key={page.id}
+                  data-proposal-page
+                  className={`slide-wrapper ${data.viewMode === "pages" && page.type !== "estrategia" ? "slide-shadow" : ""}`}
+                  style={{ marginBottom: data.viewMode === "pages" ? 32 : 0, position: 'relative' }}
+                  onMouseEnter={() => setHoveredSlide(page.id)}
+                  onMouseLeave={() => setHoveredSlide(null)}
+                >
+                  {isHovered && (
+                    <div className="no-print" style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); togglePageVisibility(page.id); }}
+                        style={{
+                          background: 'rgba(13,43,69,0.9)', border: '1px solid #c9a84c',
+                          color: '#c9a84c', borderRadius: 6, padding: '6px 12px',
+                          cursor: 'pointer', fontSize: 12, fontFamily: "'Lato', sans-serif",
+                        }}
+                      >
+                        🙈 Ocultar slide
+                      </button>
+                    </div>
+                  )}
                   {slideContent}
                 </div>
               );

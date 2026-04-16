@@ -249,9 +249,6 @@
   background: rgba(201, 168, 76, 0.05);
 }
 
-.slide-wrapper:hover .slide-controls {
-  opacity: 1 !important;
-}
 
 @media print {
   * {
