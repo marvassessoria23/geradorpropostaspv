@@ -2,10 +2,10 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 import { ProposalData, defaultProposalData, PageType, DEFAULT_BG_COLORS } from "./types";
 import EditorPanel from "./EditorPanel";
 import PageCover from "./PageCover";
-import PageDiagnostico from "./PageDiagnostico";
+import PageDiagnostico, { getDiagnosticoVisibleSubPages } from "./PageDiagnostico";
 import PageEstrategia, { getEstrategiaVisibleSubPages } from "./PageEstrategia";
 import PageArgumentos from "./PageArgumentos";
-import PageSobre from "./PageSobre";
+import PageSobre, { getSobreVisibleSubPages } from "./PageSobre";
 import PageEquipe from "./PageEquipe";
 import PageAvaliacoes from "./PageAvaliacoes";
 import PageInvestimento from "./PageInvestimento";
@@ -720,6 +720,16 @@ const ProposalEditor: React.FC = () => {
 
               if (page.type === "estrategia") {
                 const visSubs = getEstrategiaVisibleSubPages(data);
+                const extraPages = visSubs.filter(Boolean).length - 1;
+                if (extraPages > 0) globalPageCounter += extraPages;
+              }
+              if (page.type === "diagnostico") {
+                const visSubs = getDiagnosticoVisibleSubPages(data);
+                const extraPages = visSubs.filter(Boolean).length - 1;
+                if (extraPages > 0) globalPageCounter += extraPages;
+              }
+              if (page.type === "sobre") {
+                const visSubs = getSobreVisibleSubPages(data);
                 const extraPages = visSubs.filter(Boolean).length - 1;
                 if (extraPages > 0) globalPageCounter += extraPages;
               }
