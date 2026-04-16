@@ -571,6 +571,12 @@ ${slidesHTML}
             {saveStatus === 'error' && '⚠ Erro ao salvar'}
           </span>
           <button
+            onClick={generateHTML}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 8, background: 'transparent', color: '#c9a84c', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: '1px solid #c9a84c', cursor: 'pointer' }}
+          >
+            🌐 Gerar HTML
+          </button>
+          <button
             onClick={generatePDF}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 24px', borderRadius: 8, background: 'linear-gradient(to right, #c9a84c, #e8c96a)', color: '#0d2b45', fontFamily: "'Lato', sans-serif", fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer', boxShadow: '0 4px 16px rgba(201,168,76,0.25)' }}
           >
