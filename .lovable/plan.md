@@ -1,60 +1,35 @@
 
 
-# Fix PDF Print: Remove Scale During Print
+# Plano: PDF Definitivo com html-to-image + jsPDF
 
-## Problem
-The `transform: scale()` on the preview wrapper (`.preview-wrapper`) is captured by `window.print()`, producing a tiny/blank PDF. The wrapper also lacks the class `preview-scale-wrapper` that the fix needs to target.
+## Diagnóstico
+- `html-to-image` **não está instalado**. `jspdf` provavelmente também não está. Preciso instalar ambos.
+- Todos os 10 componentes de página já têm `data-slide` na div raiz (incluindo as 4 sub-páginas de Estratégia). Nada a ajustar aí.
+- `.print-area` envolve a área scrollável, e dentro dela `.preview-scale-wrapper` aplica `transform: scale()`. O `html-to-image` captura cada `[data-slide]` individualmente passando `transform: 'none'` no style override, então o scale não interfere — não preciso reestruturar o JSX.
+- Botão "Ocultar slide" (no hover) e tooltip de dica precisam ser excluídos da captura via filtro (`tagName === 'BUTTON'` já cobre o botão; tooltip recebe `data-pdf-exclude="true"`).
+- CSS `@media print` (linhas 253–305 de `index.css`) e toda lógica `body.classList.add('printing')` / `window.print()` serão removidos.
 
-## Changes (3 files, 3 edits)
+## Mudanças (3 arquivos)
 
-### 1. `ProposalEditor.tsx` — Rename wrapper class + fix `generatePDF`
-
-**Line 401**: Change `className="preview-wrapper"` → `className="preview-scale-wrapper"`
-
-**Lines 299-307**: Replace `generatePDF` with version that temporarily strips `transform`, `transformOrigin`, and sets `width: 297mm` on the `.preview-scale-wrapper` element before calling `window.print()`, then restores original styles after 1s.
-
-```typescript
-const generatePDF = () => {
-  const previewWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement;
-  const originalTransform = previewWrapper?.style.transform;
-  const originalWidth = previewWrapper?.style.width;
-  const originalTransformOrigin = previewWrapper?.style.transformOrigin;
-
-  if (previewWrapper) {
-    previewWrapper.style.transform = 'none';
-    previewWrapper.style.width = '297mm';
-    previewWrapper.style.transformOrigin = 'unset';
-  }
-
-  document.body.classList.add('printing');
-
-  setTimeout(() => {
-    window.print();
-    setTimeout(() => {
-      document.body.classList.remove('printing');
-      if (previewWrapper) {
-        previewWrapper.style.transform = originalTransform || '';
-        previewWrapper.style.width = originalWidth || '';
-        previewWrapper.style.transformOrigin = originalTransformOrigin || '';
-      }
-    }, 1000);
-  }, 300);
-};
+### 1. `package.json` — instalar dependências
+```bash
+npm install html-to-image jspdf
 ```
 
-### 2. `src/index.css` — Add `transform: none !important` to `.print-area`
+### 2. `src/components/proposal/ProposalEditor.tsx`
+- Importar `toPng` de `html-to-image` e `jsPDF` de `jspdf`.
+- Adicionar estado `isGeneratingPDF`.
+- Substituir `generatePDF` pela versão assíncrona que itera `document.querySelectorAll('[data-slide]')`, gera PNG de cada slide com `pixelRatio: 2`, monta PDF A4 paisagem (297×210mm) e salva como `proposta.pdf`. Filtro exclui `BUTTON`, `.slide-controls`, `.slide-hover-controls` e `[data-pdf-exclude="true"]`.
+- Adicionar overlay full-screen "Gerando PDF…" enquanto `isGeneratingPDF` for `true`.
+- Adicionar `data-pdf-exclude="true"` no tooltip "💡 Clique em qualquer texto…" (linha 471).
+- Botão de ocultar slide já é `<button>` → filtrado automaticamente.
 
-Add to the existing `body.printing .print-area` rule (line 270-275):
-```css
-transform: none !important;
-```
+### 3. `src/index.css`
+- Remover completamente o bloco `@media print { … }` (linhas 253–305). Mantém o resto do arquivo intacto.
 
-No other print CSS changes — the rest already matches what was requested.
+## Não modificado
+- Salvamento (Supabase), upload de imagens, todos os componentes de página (`PageCover`, `PageDiagnostico`, `PageEstrategia`, etc.), lógica de auto-ocultar slides, sub-páginas, EditorPanel, classe `preview-scale-wrapper` (mantida para layout visual).
 
-## Files Modified
-- `src/components/proposal/ProposalEditor.tsx` — wrapper class rename + `generatePDF` fix
-- `src/index.css` — add `transform: none` to `.print-area`
-
-## NOT Modified
-- Save/load logic, image upload, page components, any other CSS
+## Resultado esperado
+- Clicar em "Gerar PDF" mostra overlay, gera um arquivo `proposta.pdf` A4 paisagem, uma página por slide visível, sem botões/tooltips, com fontes e cores corretas, sem dependência de `window.print()`.
 
