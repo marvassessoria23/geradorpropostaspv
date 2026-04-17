@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ProposalData } from "./types";
 import InlineEditable from "./InlineEditable";
 
@@ -13,11 +13,44 @@ interface Props {
 const v = (val: string | undefined | null) => !!(val && val.trim() !== '');
 
 export const getSobreVisibleSubPages = (data: ProposalData): boolean[] => {
-  // Slide 1 sempre visível (tem título/estrutura)
-  const slide1 = true;
-  // Slide 2 só se sobreText3 tiver conteúdo
-  const slide2 = v(data.sobreText3);
+  const slide1 = !data.hiddenFields?.['subpage_sobre_1'];
+  const slide2Hidden = !!data.hiddenFields?.['subpage_sobre_2'];
+  const hasSlide2Content = v(data.sobreText3);
+  const slide2 = !slide2Hidden && hasSlide2Content;
   return [slide1, slide2];
+};
+
+const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalData>) => void; data: ProposalData }> = ({ subPageKey, onChange, data }) => {
+  const [hovered, setHovered] = useState(false);
+  return hovered ? (
+    <div
+      className="no-print"
+      style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange({ hiddenFields: { ...data.hiddenFields, [subPageKey]: true } });
+        }}
+        style={{
+          background: 'rgba(13,43,69,0.9)', border: '1px solid #c9a84c',
+          color: '#c9a84c', borderRadius: 6, padding: '6px 12px',
+          cursor: 'pointer', fontSize: 12, fontFamily: "'Lato', sans-serif",
+        }}
+      >
+        🙈 Ocultar sub-página
+      </button>
+    </div>
+  ) : (
+    <div
+      className="no-print"
+      style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, zIndex: 999 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    />
+  );
 };
 
 const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
@@ -43,9 +76,10 @@ const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, 
     overflow: 'hidden',
     position: 'relative',
     boxSizing: 'border-box',
-    padding: '48px 64px',
+    padding: '64px 96px',
     display: 'flex',
     flexDirection: 'column',
+    justifyContent: 'center',
     backgroundColor: bg,
   };
 
@@ -59,10 +93,13 @@ const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, 
     whiteSpace: 'pre-wrap',
   };
 
+  const slide2PageNum = subs[0] ? pageNumber + 1 : pageNumber;
+
   return (
     <>
       {subs[0] && (
-        <div data-proposal-page style={{ position: 'relative' }}>
+        <div data-proposal-page className="slide-shadow" style={{ position: 'relative' }}>
+          <HideButton subPageKey="subpage_sobre_1" onChange={up} data={data} />
           <div className="slide watermark-light" data-slide style={slide1Style}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
@@ -119,27 +156,17 @@ const PageSobre: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, 
       )}
 
       {subs[1] && (
-        <div data-proposal-page style={{ position: 'relative' }}>
+        <div data-proposal-page className="slide-shadow" style={{ position: 'relative' }}>
+          <HideButton subPageKey="subpage_sobre_2" onChange={up} data={data} />
           <div className="slide watermark-light" data-slide style={slide2Style}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
-              <div className="gold-bar-vertical" style={{ height: 48 }} />
-              <h2 style={{ fontFamily: "'Playfair Display', serif", color: '#1a3a5c', fontSize: 28, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', margin: 0 }}>
-                {data.sobreTitle || 'Sobre'}
-              </h2>
-              <div style={{ flex: 1, height: 1, background: 'rgba(26,58,92,0.1)', marginLeft: 16 }} />
-            </div>
-
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <InlineEditable
-                tag="p"
-                value={data.sobreText3}
-                onChange={(v) => up({ sobreText3: v })}
-                multiline
-                style={textStyle}
-              />
-            </div>
-
-            <div className="page-num">{pageNumber + 1}</div>
+            <InlineEditable
+              tag="p"
+              value={data.sobreText3}
+              onChange={(v) => up({ sobreText3: v })}
+              multiline
+              style={{ ...textStyle, fontSize: sz + 1, lineHeight: 1.8 }}
+            />
+            <div className="page-num">{slide2PageNum}</div>
           </div>
         </div>
       )}

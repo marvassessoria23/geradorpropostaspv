@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ProposalData } from "./types";
 import InlineEditable from "./InlineEditable";
 
@@ -14,11 +14,44 @@ const fs = { small: 12, medium: 14, large: 16 };
 const v = (val: string | undefined | null) => !!(val && val.trim() !== '');
 
 export const getDiagnosticoVisibleSubPages = (data: ProposalData): boolean[] => {
-  // Slide 1 sempre visível (tem badge fixo)
-  const slide1 = true;
-  // Slide 2 só se tiver jurisprudência ou conclusão
-  const slide2 = v(data.diagnosticoJurisprudencia) || v(data.diagnosticoConclusao);
+  const slide1 = !data.hiddenFields?.['subpage_diagnostico_1'];
+  const slide2Hidden = !!data.hiddenFields?.['subpage_diagnostico_2'];
+  const hasSlide2Content = v(data.diagnosticoJurisprudencia) || v(data.diagnosticoConclusao);
+  const slide2 = !slide2Hidden && hasSlide2Content;
   return [slide1, slide2];
+};
+
+const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalData>) => void; data: ProposalData }> = ({ subPageKey, onChange, data }) => {
+  const [hovered, setHovered] = useState(false);
+  return hovered ? (
+    <div
+      className="no-print"
+      style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange({ hiddenFields: { ...data.hiddenFields, [subPageKey]: true } });
+        }}
+        style={{
+          background: 'rgba(13,43,69,0.9)', border: '1px solid #c9a84c',
+          color: '#c9a84c', borderRadius: 6, padding: '6px 12px',
+          cursor: 'pointer', fontSize: 12, fontFamily: "'Lato', sans-serif",
+        }}
+      >
+        🙈 Ocultar sub-página
+      </button>
+    </div>
+  ) : (
+    <div
+      className="no-print"
+      style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, zIndex: 999 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    />
+  );
 };
 
 const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgColor, onChange }) => {
@@ -47,10 +80,14 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
     whiteSpace: 'pre-wrap',
   };
 
+  // Compute page numbers (slide 2 only consumes a number if visible)
+  const slide2PageNum = subs[0] ? pageNumber + 1 : pageNumber;
+
   return (
     <>
       {subs[0] && (
-        <div data-proposal-page style={{ position: 'relative' }}>
+        <div data-proposal-page className="slide-shadow" style={{ position: 'relative' }}>
+          <HideButton subPageKey="subpage_diagnostico_1" onChange={up} data={data} />
           <div className="slide watermark-light" data-slide style={slideStyle}>
             <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, border: '4px solid rgba(13,43,69,0.08)', borderRadius: '50%', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', top: 40, right: 50, width: 100, height: 100, border: '3px solid rgba(201,168,76,0.1)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -102,7 +139,8 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
       )}
 
       {subs[1] && (
-        <div data-proposal-page style={{ position: 'relative' }}>
+        <div data-proposal-page className="slide-shadow" style={{ position: 'relative' }}>
+          <HideButton subPageKey="subpage_diagnostico_2" onChange={up} data={data} />
           <div className="slide watermark-light" data-slide style={slideStyle}>
             <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, border: '4px solid rgba(13,43,69,0.08)', borderRadius: '50%', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', top: 40, right: 50, width: 100, height: 100, border: '3px solid rgba(201,168,76,0.1)', borderRadius: '50%', pointerEvents: 'none' }} />
@@ -130,7 +168,7 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
               )}
             </div>
 
-            <div className="page-num">{pageNumber + 1}</div>
+            <div className="page-num">{slide2PageNum}</div>
           </div>
         </div>
       )}
