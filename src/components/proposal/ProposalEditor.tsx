@@ -304,12 +304,15 @@ const ProposalEditor: React.FC = () => {
     setIsGeneratingPDF(true);
     try {
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 800));
+      await new Promise((r) => setTimeout(r, 400));
 
+      // Neutralize the preview scale so each slide is captured at full 1280x720
       const scaleWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
       const savedTransform = scaleWrapper?.style.transform;
       const savedWidth = scaleWrapper?.style.width;
       const savedOrigin = scaleWrapper?.style.transformOrigin;
+      const scrollContainer = document.querySelector('.print-area') as HTMLElement | null;
+      const savedScrollTop = scrollContainer?.scrollTop ?? 0;
 
       if (scaleWrapper) {
         scaleWrapper.style.transform = 'none';
@@ -319,35 +322,6 @@ const ProposalEditor: React.FC = () => {
 
       await new Promise((r) => setTimeout(r, 400));
 
-      const container = document.querySelector('.print-area') as HTMLElement | null;
-      if (!container) {
-        alert('Área de slides não encontrada.');
-        setIsGeneratingPDF(false);
-        return;
-      }
-
-      const canvas = await html2canvas(container, {
-        scale: 1.5,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#0d2b45',
-        imageTimeout: 30000,
-        logging: false,
-      });
-
-      if (scaleWrapper) {
-        scaleWrapper.style.transform = savedTransform || '';
-        scaleWrapper.style.width = savedWidth || '';
-        scaleWrapper.style.transformOrigin = savedOrigin || '';
-      }
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.92);
-      const pxToMm = 0.2646;
-      const totalHeightMm = (canvas.height / 1.5) * pxToMm;
-      const slideHeightMm = 720 * pxToMm;
-      const totalWidthMm = (canvas.width / 1.5) * pxToMm;
-      const numPages = Math.max(1, Math.round(totalHeightMm / slideHeightMm));
-
       const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
@@ -355,11 +329,56 @@ const ProposalEditor: React.FC = () => {
         compress: true,
       });
 
-      for (let i = 0; i < numPages; i++) {
-        if (i > 0) pdf.addPage([297, 210], 'landscape');
-        const yOffsetMm = -(i * slideHeightMm);
-        pdf.addImage(imgData, 'JPEG', 0, yOffsetMm, totalWidthMm, totalHeightMm);
+      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
+      if (slides.length === 0) {
+        alert('Nenhum slide encontrado.');
+        setIsGeneratingPDF(false);
+        return;
       }
+
+      let firstPage = true;
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        try {
+          slide.scrollIntoView({ behavior: 'auto', block: 'start' });
+        } catch { /* ignore */ }
+        await new Promise((r) => setTimeout(r, 250));
+
+        const canvas = await html2canvas(slide, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: null,
+          logging: false,
+          imageTimeout: 15000,
+          scrollX: -window.scrollX,
+          scrollY: -window.scrollY,
+          windowWidth: document.documentElement.offsetWidth,
+          windowHeight: document.documentElement.offsetHeight,
+          ignoreElements: (el) => {
+            const e = el as HTMLElement;
+            if (!e.getAttribute) return false;
+            if (e.getAttribute('data-html2canvas-ignore') === 'true') return true;
+            if (e.getAttribute('data-pdf-exclude') === 'true') return true;
+            if (e.classList && e.classList.contains('no-print')) return true;
+            return false;
+          },
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.92);
+        if (!firstPage) pdf.addPage([297, 210], 'landscape');
+        firstPage = false;
+        pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
+      }
+
+      // Restore styles & scroll
+      if (scaleWrapper) {
+        scaleWrapper.style.transform = savedTransform || '';
+        scaleWrapper.style.width = savedWidth || '';
+        scaleWrapper.style.transformOrigin = savedOrigin || '';
+      }
+      if (scrollContainer) scrollContainer.scrollTop = savedScrollTop;
+      window.scrollTo({ top: 0, behavior: 'auto' });
 
       pdf.save('proposta.pdf');
     } catch (error) {
@@ -373,15 +392,19 @@ const ProposalEditor: React.FC = () => {
   const generateHTML = async () => {
     setIsGeneratingHTML(true);
     try {
-      const imgToBase64 = (imgEl: HTMLImageElement): string => {
+      const imgToBase64 = async (url: string): Promise<string> => {
+        if (!url || url.startsWith('data:')) return url;
         try {
-          const c = document.createElement('canvas');
-          c.width = imgEl.naturalWidth || imgEl.width || 1;
-          c.height = imgEl.naturalHeight || imgEl.height || 1;
-          c.getContext('2d')?.drawImage(imgEl, 0, 0);
-          return c.toDataURL('image/jpeg', 0.9);
+          const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
+          const blob = await response.blob();
+          return await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
         } catch {
-          return imgEl.src;
+          return url;
         }
       };
 
@@ -415,17 +438,15 @@ const ProposalEditor: React.FC = () => {
             (el as HTMLElement).style.pointerEvents = 'none';
           });
 
-          // Converter <img> usando canvas DOM (drawImage no <img> já carregado)
-          const originalImgs = Array.from(slide.querySelectorAll('img')) as HTMLImageElement[];
+          // Convert <img> tags to base64 via fetch+blob (more robust than canvas/CORS)
           const cloneImgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
-          cloneImgs.forEach((cloneImg, idx) => {
-            const orig = originalImgs[idx];
-            if (orig?.complete && orig.naturalWidth > 0) {
-              cloneImg.src = imgToBase64(orig);
+          await Promise.all(cloneImgs.map(async (cloneImg) => {
+            if (cloneImg.src && !cloneImg.src.startsWith('data:')) {
+              cloneImg.src = await imgToBase64(cloneImg.src);
             }
             cloneImg.draggable = false;
             cloneImg.style.pointerEvents = 'none';
-          });
+          }));
 
           clone.style.cssText = `
             width: 1280px !important;
@@ -686,7 +707,7 @@ const ProposalEditor: React.FC = () => {
                   onMouseLeave={() => setHoveredSlide(null)}
                 >
                   {isHovered && (
-                    <div className="no-print" style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
+                    <div className="no-print" data-html2canvas-ignore="true" style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); togglePageVisibility(page.id); }}
                         style={{

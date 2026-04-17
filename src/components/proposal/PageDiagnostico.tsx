@@ -13,12 +13,46 @@ interface Props {
 const fs = { small: 12, medium: 14, large: 16 };
 const v = (val: string | undefined | null) => !!(val && val.trim() !== '');
 
+// Slice text into slide1/slide2 by paragraphs respecting a char budget.
+// Joins all relevant fields with double newline as separator paragraphs.
+const SLIDE1_CHAR_BUDGET = 1000;
+
+const splitTextIntoSlides = (paragraphs: string[], maxChars = SLIDE1_CHAR_BUDGET) => {
+  const slide1: string[] = [];
+  const slide2: string[] = [];
+  let count = 0;
+  let overflow = false;
+  for (const p of paragraphs) {
+    if (!overflow && count + p.length <= maxChars) {
+      slide1.push(p);
+      count += p.length;
+    } else {
+      overflow = true;
+      slide2.push(p);
+    }
+  }
+  return { slide1, slide2 };
+};
+
+const collectDiagnosticoParagraphs = (data: ProposalData): string[] => {
+  const fields = [data.diagnosticoIntro, data.diagnosticoBody, data.diagnosticoJurisprudencia, data.diagnosticoConclusao];
+  const paras: string[] = [];
+  for (const f of fields) {
+    if (!v(f)) continue;
+    // Split each field by double newline into logical paragraphs
+    const parts = (f as string).split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+    paras.push(...parts);
+  }
+  return paras;
+};
+
 export const getDiagnosticoVisibleSubPages = (data: ProposalData): boolean[] => {
   const slide1 = !data.hiddenFields?.['subpage_diagnostico_1'];
   const slide2Hidden = !!data.hiddenFields?.['subpage_diagnostico_2'];
-  const hasSlide2Content = v(data.diagnosticoJurisprudencia) || v(data.diagnosticoConclusao);
-  const slide2 = !slide2Hidden && hasSlide2Content;
-  return [slide1, slide2];
+  const paras = collectDiagnosticoParagraphs(data);
+  const { slide2 } = splitTextIntoSlides(paras);
+  const hasOverflow = slide2.length > 0;
+  return [slide1, !slide2Hidden && hasOverflow];
 };
 
 const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalData>) => void; data: ProposalData }> = ({ subPageKey, onChange, data }) => {
@@ -26,6 +60,7 @@ const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalD
   return hovered ? (
     <div
       className="no-print"
+      data-html2canvas-ignore="true"
       style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -47,6 +82,7 @@ const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalD
   ) : (
     <div
       className="no-print"
+      data-html2canvas-ignore="true"
       style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, zIndex: 999 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -80,7 +116,9 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
     whiteSpace: 'pre-wrap',
   };
 
-  // Compute page numbers (slide 2 only consumes a number if visible)
+  const allParas = collectDiagnosticoParagraphs(data);
+  const { slide1: slide1Paras, slide2: slide2Paras } = splitTextIntoSlides(allParas);
+
   const slide2PageNum = subs[0] ? pageNumber + 1 : pageNumber;
 
   return (
@@ -113,24 +151,9 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {v(data.diagnosticoIntro) && (
-                <InlineEditable
-                  tag="p"
-                  value={data.diagnosticoIntro}
-                  onChange={(v) => up({ diagnosticoIntro: v })}
-                  multiline
-                  style={textStyle}
-                />
-              )}
-              {v(data.diagnosticoBody) && (
-                <InlineEditable
-                  tag="p"
-                  value={data.diagnosticoBody}
-                  onChange={(v) => up({ diagnosticoBody: v })}
-                  multiline
-                  style={textStyle}
-                />
-              )}
+              {slide1Paras.map((p, i) => (
+                <p key={i} style={textStyle}>{p}</p>
+              ))}
             </div>
 
             <div className="page-num">{pageNumber}</div>
@@ -145,27 +168,10 @@ const PageDiagnostico: React.FC<Props> = ({ data, textSizeClass, pageNumber, bgC
             <div style={{ position: 'absolute', top: -30, right: -30, width: 160, height: 160, border: '4px solid rgba(13,43,69,0.08)', borderRadius: '50%', pointerEvents: 'none' }} />
             <div style={{ position: 'absolute', top: 40, right: 50, width: 100, height: 100, border: '3px solid rgba(201,168,76,0.1)', borderRadius: '50%', pointerEvents: 'none' }} />
 
-            <div className="gold-badge" style={{ marginBottom: 24 }}>CONTEXTO DA DEMANDA</div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {v(data.diagnosticoJurisprudencia) && (
-                <InlineEditable
-                  tag="p"
-                  value={data.diagnosticoJurisprudencia}
-                  onChange={(v) => up({ diagnosticoJurisprudencia: v })}
-                  multiline
-                  style={textStyle}
-                />
-              )}
-              {v(data.diagnosticoConclusao) && (
-                <InlineEditable
-                  tag="p"
-                  value={data.diagnosticoConclusao}
-                  onChange={(v) => up({ diagnosticoConclusao: v })}
-                  multiline
-                  style={textStyle}
-                />
-              )}
+              {slide2Paras.map((p, i) => (
+                <p key={i} style={textStyle}>{p}</p>
+              ))}
             </div>
 
             <div className="page-num">{slide2PageNum}</div>

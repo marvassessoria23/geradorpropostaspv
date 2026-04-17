@@ -25,6 +25,7 @@ const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalD
   return hovered ? (
     <div
       className="no-print"
+      data-html2canvas-ignore="true"
       style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -46,6 +47,7 @@ const HideButton: React.FC<{ subPageKey: string; onChange: (u: Partial<ProposalD
   ) : (
     <div
       className="no-print"
+      data-html2canvas-ignore="true"
       style={{ position: 'absolute', top: 0, right: 0, width: 60, height: 60, zIndex: 999 }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
