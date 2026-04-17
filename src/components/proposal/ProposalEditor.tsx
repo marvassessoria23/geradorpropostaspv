@@ -707,7 +707,7 @@ const ProposalEditor: React.FC = () => {
                   onMouseLeave={() => setHoveredSlide(null)}
                 >
                   {isHovered && (
-                    <div className="no-print" style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
+                    <div className="no-print" data-html2canvas-ignore="true" style={{ position: 'absolute', top: 8, right: 8, zIndex: 1000 }}>
                       <button
                         onClick={(e) => { e.stopPropagation(); togglePageVisibility(page.id); }}
                         style={{
