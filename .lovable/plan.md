@@ -1,40 +1,61 @@
 
-
-# Plano: refazer PDF (html2canvas), HTML, corrigir PageSobre, ocultar subslides
+# Plano: corrigir PDF por scroll, fatiar Diagnóstico e restaurar imagens no HTML
 
 ## Diagnóstico
-- **PDF atual** usa `toPng` slide-a-slide com lógica complexa de overflow → instável. Trocar por `html2canvas` na `.print-area` inteira, com escala neutralizada.
-- **HTML atual** usa `fetch+FileReader` para imagens (CORS / cache-buster pode falhar). Trocar por canvas DOM (`drawImage` no `<img>` já carregado).
-- **PageSobre subslide 2** repete título "SOBRE A PAIVA NUNES" — corrigir para apenas continuação de texto.
-- **Subslides** de Diagnóstico e Sobre não têm botão "Ocultar" no preview (Estrategia já tem via `HideButton`).
+- `html2canvas` já está instalado.
+- Hoje o `generatePDF` captura a `.print-area` inteira de uma vez; isso mantém problemas de escala/altura.
+- Hoje o `generateHTML` converte imagens com `canvas.drawImage`; isso falha em alguns casos de CORS.
+- Hoje o `PageDiagnostico` só separa em 2 subslides por grupo fixo de campos; ele não fatia texto excedente. O slide 2 só olha `diagnosticoJurisprudencia` e `diagnosticoConclusao`.
 
 ## Mudanças
 
-### 1. `package.json` — instalar `html2canvas`
-Adicionar dependência (via interface de pacotes do Lovable na fase build).
+### 1) `src/components/proposal/ProposalEditor.tsx`
+Substituir as duas funções:
 
-### 2. `src/components/proposal/types.ts`
-Adicionar campos opcionais (`hiddenFields` já cobre via chaves dinâmicas — usar `subpage_diagnostico_2` e `subpage_sobre_2`, mesmo padrão do `PageEstrategia`). **Nenhuma mudança em types.ts.**
+- **PDF**
+  - Trocar a captura única por captura **slide a slide** com `html2canvas`.
+  - Para cada `[data-slide]`: rolar até ele, aguardar reflow curto, capturar o slide visível e adicionar 1 página ao `jsPDF`.
+  - Ao final, voltar o scroll ao topo.
+  - Não usar container invisível nem clone offscreen.
 
-### 3. `src/components/proposal/ProposalEditor.tsx`
-**a)** Importar `html2canvas`. Substituir `generatePDF` pela versão com `html2canvas` na `.print-area`, neutralizando o `transform: scale` do `.preview-scale-wrapper`, capturando em `scale: 1.5`, recortando em páginas A4 paisagem de 720px de altura.
-**b)** Substituir `generateHTML` pela versão com `imgToBase64` via canvas DOM (usa `<img>` já renderizado, sem refetch). Manter sanitização (remover botões, contenteditable, etc.) e estrutura `.slide-container` + `.slide-wrapper`.
-**c)** Manter overlays de loading (já existem).
+- **HTML**
+  - Trocar a conversão de imagens para `fetch -> blob -> FileReader`.
+  - Converter todas as `<img>` clonadas com `Promise.all`.
+  - Manter o documento final somente leitura.
+  - Preservar a remoção de botões/overlays/elementos de edição no clone.
 
-### 4. `src/components/proposal/PageDiagnostico.tsx`
-Adicionar `HideButton` interno (cópia do padrão do PageEstrategia) no subslide 2, com chave `subpage_diagnostico_2`. Atualizar `getDiagnosticoVisibleSubPages` para respeitar `data.hiddenFields?.subpage_diagnostico_2`.
+- **Ignorar controles**
+  - Garantir `data-html2canvas-ignore="true"` nos overlays e controles que não devem entrar na captura/exportação.
 
-### 5. `src/components/proposal/PageSobre.tsx`
-- Remover título e badge do subslide 2 — apenas fundo bege, padding, e parágrafo `sobreText3` continuando.
-- Adicionar `HideButton` no subslide 2 com chave `subpage_sobre_2`.
-- Atualizar `getSobreVisibleSubPages` para respeitar `data.hiddenFields?.subpage_sobre_2`.
+### 2) `src/components/proposal/PageDiagnostico.tsx`
+Refazer a lógica de conteúdo para **fatiar texto**, não só detectar overflow:
 
-## Não modificado
-- Salvamento Supabase, upload de imagens, `EditorPanel`, `index.css`, demais componentes de página.
+- Criar helper de divisão por parágrafo com limite de caracteres.
+- Aplicar a divisão aos textos longos do diagnóstico:
+  - `diagnosticoIntro`
+  - `diagnosticoBody`
+  - `diagnosticoJurisprudencia`
+  - `diagnosticoConclusao`
+- Montar o **Slide 1** com título/saudação + primeira parte do conteúdo.
+- Se houver excedente, montar o **Slide 2** automaticamente com **apenas continuação do texto**, sem repetir badge, título ou saudação.
+- Atualizar `getDiagnosticoVisibleSubPages` para considerar o excedente real.
+- Manter a opção de ocultar subslide 2 via `hiddenFields`.
+
+### 3) Controles ignorados pelo html2canvas
+Ajustar os componentes que já têm botões de hover/ocultar para marcar esses controles com `data-html2canvas-ignore`, sem alterar comportamento:
+- `ProposalEditor.tsx`
+- `PageDiagnostico.tsx`
+- `PageEstrategia.tsx`
+- `PageSobre.tsx` (se ainda houver controle de subslide no preview)
+
+## Cuidados para manter intacto
+Não mexer em:
+- salvamento
+- backend/Lovable Cloud
+- `EditorPanel`
+- estrutura geral dos outros slides
 
 ## Resultado esperado
-- **PDF:** captura única via `html2canvas` da `.print-area` em 1280px desnormalizado, dividida automaticamente em A4 paisagem 720px por página. Sem distorção, sem páginas em branco.
-- **HTML:** offline, imagens em base64 via canvas DOM (mais robusto que fetch). Slides centralizados, somente leitura, Ctrl+P imprime A4 paisagem.
-- **PageSobre slide 2:** apenas texto de continuação, sem título repetido.
-- **Subslides:** cada um com botão "Ocultar sub-página" no hover (preview), persistido em `hiddenFields`.
-
+- **PDF**: 1 captura por slide real, com scroll antes da captura, sem depender de container clonado.
+- **Diagnóstico**: texto longo passa a ser distribuído entre slide 1 e slide 2 automaticamente.
+- **HTML**: imagens voltam a sair embutidas em base64 usando `fetch/blob`, com fallback para URL original quando necessário.
