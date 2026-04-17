@@ -15,7 +15,7 @@ const v = (val: string | undefined | null) => !!(val && val.trim() !== '');
 
 // Slice text into slide1/slide2 by paragraphs respecting a char budget.
 // Joins all relevant fields with double newline as separator paragraphs.
-const SLIDE1_CHAR_BUDGET = 1000;
+const SLIDE1_CHAR_BUDGET = 2500;
 
 const splitTextIntoSlides = (paragraphs: string[], maxChars = SLIDE1_CHAR_BUDGET) => {
   const slide1: string[] = [];
@@ -39,8 +39,8 @@ const collectDiagnosticoParagraphs = (data: ProposalData): string[] => {
   const paras: string[] = [];
   for (const f of fields) {
     if (!v(f)) continue;
-    // Split each field by double newline into logical paragraphs
-    const parts = (f as string).split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+    // Split by single OR double newline
+    const parts = (f as string).split(/\n+/).map(s => s.trim()).filter(Boolean);
     paras.push(...parts);
   }
   return paras;
