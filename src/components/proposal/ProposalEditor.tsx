@@ -14,8 +14,8 @@ import PageContato from "./PageContato";
 import { FileDown, PanelLeftClose, PanelLeft } from "lucide-react";
 import logoImg from "@/assets/logo-paiva-nunes.png";
 import { supabase } from "@/integrations/supabase/client";
-import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const TEXT_SIZE_MAP = {
   small: "text-xs",
@@ -302,117 +302,63 @@ const ProposalEditor: React.FC = () => {
 
   const generatePDF = async () => {
     setIsGeneratingPDF(true);
-
     try {
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 800));
 
-      const A4_W_MM = 297;
-      const A4_H_MM = 210;
-      const SLIDE_W = 1280;
-      const SLIDE_H = 720;
-      const MM_PER_PX = A4_W_MM / SLIDE_W;
-      const OVERFLOW_TOLERANCE_PX = 24;
+      const scaleWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
+      const savedTransform = scaleWrapper?.style.transform;
+      const savedWidth = scaleWrapper?.style.width;
+      const savedOrigin = scaleWrapper?.style.transformOrigin;
 
-      const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      });
+      if (scaleWrapper) {
+        scaleWrapper.style.transform = 'none';
+        scaleWrapper.style.width = '1280px';
+        scaleWrapper.style.transformOrigin = 'top left';
+      }
 
-      const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
+      await new Promise((r) => setTimeout(r, 400));
 
-      if (slides.length === 0) {
-        alert('Nenhum slide encontrado. Tente novamente.');
+      const container = document.querySelector('.print-area') as HTMLElement | null;
+      if (!container) {
+        alert('Área de slides não encontrada.');
         setIsGeneratingPDF(false);
         return;
       }
 
-      let firstPage = true;
+      const canvas = await html2canvas(container, {
+        scale: 1.5,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#0d2b45',
+        imageTimeout: 30000,
+        logging: false,
+      });
 
-      for (let i = 0; i < slides.length; i++) {
-        const slide = slides[i];
-        const originalRectHeight = Math.ceil(slide.getBoundingClientRect().height);
-        const originalComputedStyle = window.getComputedStyle(slide);
-        const wasFixedSlide =
-          (originalComputedStyle.overflow === 'hidden' || originalComputedStyle.overflowY === 'hidden') &&
-          Math.abs(originalRectHeight - SLIDE_H) <= 4;
+      if (scaleWrapper) {
+        scaleWrapper.style.transform = savedTransform || '';
+        scaleWrapper.style.width = savedWidth || '';
+        scaleWrapper.style.transformOrigin = savedOrigin || '';
+      }
 
-        // Save original inline styles
-        const saved = {
-          width: slide.style.width,
-          height: slide.style.height,
-          minHeight: slide.style.minHeight,
-          maxHeight: slide.style.maxHeight,
-          overflow: slide.style.overflow,
-          transform: slide.style.transform,
-          transformOrigin: slide.style.transformOrigin,
-          position: slide.style.position,
-        };
+      const imgData = canvas.toDataURL('image/jpeg', 0.92);
+      const pxToMm = 0.2646;
+      const totalHeightMm = (canvas.height / 1.5) * pxToMm;
+      const slideHeightMm = 720 * pxToMm;
+      const totalWidthMm = (canvas.width / 1.5) * pxToMm;
+      const numPages = Math.max(1, Math.round(totalHeightMm / slideHeightMm));
 
-        // Force natural-height capture (no clipping)
-        Object.assign(slide.style, {
-          width: `${SLIDE_W}px`,
-          height: 'auto',
-          minHeight: `${SLIDE_H}px`,
-          maxHeight: 'none',
-          overflow: 'visible',
-          transform: 'none',
-          transformOrigin: 'top left',
-          position: 'relative',
-        });
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [297, 210],
+        compress: true,
+      });
 
-        // Allow layout to settle (longer wait + 2x rAF for heavy slides)
-        await new Promise((r) => setTimeout(r, 150));
-        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-
-        const rectH = slide.getBoundingClientRect().height;
-        const measuredHeight = Math.ceil(Math.max(slide.scrollHeight, rectH, SLIDE_H));
-        const overflowPx = measuredHeight - SLIDE_H;
-        const naturalHeight = wasFixedSlide && overflowPx <= OVERFLOW_TOLERANCE_PX
-          ? SLIDE_H
-          : measuredHeight;
-
-        let dataUrl = '';
-        try {
-          dataUrl = await toPng(slide, {
-            width: SLIDE_W,
-            height: naturalHeight,
-            pixelRatio: 1.5,
-            cacheBust: true,
-            skipFonts: false,
-            fetchRequestInit: {
-              mode: 'cors' as RequestMode,
-              cache: 'no-cache' as RequestCache,
-            },
-            filter: (node: HTMLElement) => {
-              if (!node) return true;
-              if (node.tagName === 'BUTTON') return false;
-              if (node.classList?.contains?.('slide-controls')) return false;
-              if (node.classList?.contains?.('slide-hover-controls')) return false;
-              if (node.getAttribute?.('data-pdf-exclude') === 'true') return false;
-              return true;
-            },
-          });
-        } catch (slideError) {
-          console.error(`Erro no slide ${i + 1}:`, slideError);
-        }
-
-        // Restore original styles
-        Object.assign(slide.style, saved);
-
-        if (!dataUrl) continue;
-
-        const totalHeightMm = naturalHeight * MM_PER_PX;
-        const numPages = Math.max(1, Math.ceil((naturalHeight - 1) / SLIDE_H));
-
-        for (let p = 0; p < numPages; p++) {
-          if (!firstPage) pdf.addPage('a4', 'landscape');
-          firstPage = false;
-          const yOffsetMm = -p * A4_H_MM;
-          pdf.addImage(dataUrl, 'PNG', 0, yOffsetMm, A4_W_MM, totalHeightMm);
-        }
+      for (let i = 0; i < numPages; i++) {
+        if (i > 0) pdf.addPage([297, 210], 'landscape');
+        const yOffsetMm = -(i * slideHeightMm);
+        pdf.addImage(imgData, 'JPEG', 0, yOffsetMm, totalWidthMm, totalHeightMm);
       }
 
       pdf.save('proposta.pdf');
@@ -427,19 +373,15 @@ const ProposalEditor: React.FC = () => {
   const generateHTML = async () => {
     setIsGeneratingHTML(true);
     try {
-      const urlToBase64 = async (url: string): Promise<string> => {
-        if (!url || url.startsWith('data:')) return url;
+      const imgToBase64 = (imgEl: HTMLImageElement): string => {
         try {
-          const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
-          const blob = await response.blob();
-          return await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
+          const c = document.createElement('canvas');
+          c.width = imgEl.naturalWidth || imgEl.width || 1;
+          c.height = imgEl.naturalHeight || imgEl.height || 1;
+          c.getContext('2d')?.drawImage(imgEl, 0, 0);
+          return c.toDataURL('image/jpeg', 0.9);
         } catch {
-          return url;
+          return imgEl.src;
         }
       };
 
@@ -458,45 +400,32 @@ const ProposalEditor: React.FC = () => {
           // Remover TUDO que é interativo ou de edição
           clone
             .querySelectorAll(
-              'button, [data-pdf-exclude], [contenteditable], .slide-controls, .slide-hover-controls, [data-pdf-exclude="true"]'
+              'button, [data-pdf-exclude], .slide-controls, .slide-hover-controls, .no-print'
             )
             .forEach((el) => el.remove());
 
-          // Remover atributos de edição
+          // Remover atributos de edição e bloquear interação
           clone.querySelectorAll('*').forEach((el) => {
             el.removeAttribute('contenteditable');
-            el.removeAttribute('data-slide');
             el.removeAttribute('spellcheck');
             el.removeAttribute('tabindex');
             (el as HTMLElement).style.cursor = 'default';
             (el as HTMLElement).style.userSelect = 'none';
             (el as HTMLElement).style.webkitUserSelect = 'none';
+            (el as HTMLElement).style.pointerEvents = 'none';
           });
 
-          // Converter <img src> para base64
-          await Promise.all(
-            Array.from(clone.querySelectorAll('img')).map(async (img) => {
-              if (img.src && !img.src.startsWith('data:')) {
-                img.src = await urlToBase64(img.src);
-              }
-              img.style.pointerEvents = 'none';
-              img.draggable = false;
-            })
-          );
-
-          // Converter background-image inline para base64
-          await Promise.all(
-            (Array.from(clone.querySelectorAll('*')) as HTMLElement[]).map(async (el) => {
-              const bg = el.style?.backgroundImage;
-              if (bg && bg.includes('url(') && !bg.includes('data:')) {
-                const match = bg.match(/url\(['"]?([^'")\s]+)['"]?\)/);
-                if (match?.[1]) {
-                  const b64 = await urlToBase64(match[1]);
-                  el.style.backgroundImage = `url("${b64}")`;
-                }
-              }
-            })
-          );
+          // Converter <img> usando canvas DOM (drawImage no <img> já carregado)
+          const originalImgs = Array.from(slide.querySelectorAll('img')) as HTMLImageElement[];
+          const cloneImgs = Array.from(clone.querySelectorAll('img')) as HTMLImageElement[];
+          cloneImgs.forEach((cloneImg, idx) => {
+            const orig = originalImgs[idx];
+            if (orig?.complete && orig.naturalWidth > 0) {
+              cloneImg.src = imgToBase64(orig);
+            }
+            cloneImg.draggable = false;
+            cloneImg.style.pointerEvents = 'none';
+          });
 
           clone.style.cssText = `
             width: 1280px !important;
