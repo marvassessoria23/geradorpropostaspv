@@ -304,23 +304,6 @@ const ProposalEditor: React.FC = () => {
     setIsGeneratingPDF(true);
     try {
       await document.fonts.ready;
-      await new Promise((r) => setTimeout(r, 400));
-
-      // Neutralize the preview scale so each slide is captured at full 1280x720
-      const scaleWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
-      const savedTransform = scaleWrapper?.style.transform;
-      const savedWidth = scaleWrapper?.style.width;
-      const savedOrigin = scaleWrapper?.style.transformOrigin;
-      const scrollContainer = document.querySelector('.print-area') as HTMLElement | null;
-      const savedScrollTop = scrollContainer?.scrollTop ?? 0;
-
-      if (scaleWrapper) {
-        scaleWrapper.style.transform = 'none';
-        scaleWrapper.style.width = '1280px';
-        scaleWrapper.style.transformOrigin = 'top left';
-      }
-
-      await new Promise((r) => setTimeout(r, 400));
 
       const pdf = new jsPDF({
         orientation: 'landscape',
@@ -328,6 +311,21 @@ const ProposalEditor: React.FC = () => {
         format: [297, 210],
         compress: true,
       });
+
+      // Neutralizar scale do wrapper
+      const scaleWrapper = document.querySelector('.preview-scale-wrapper') as HTMLElement | null;
+      const savedTransform = scaleWrapper?.style.transform || '';
+      const savedWidth = scaleWrapper?.style.width || '';
+      const savedOrigin = scaleWrapper?.style.transformOrigin || '';
+
+      if (scaleWrapper) {
+        scaleWrapper.style.transform = 'none';
+        scaleWrapper.style.width = '1280px';
+        scaleWrapper.style.transformOrigin = 'top left';
+      }
+
+      // Aguardar layout estabilizar
+      await new Promise(r => setTimeout(r, 600));
 
       const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
       if (slides.length === 0) {
@@ -339,10 +337,15 @@ const ProposalEditor: React.FC = () => {
       let firstPage = true;
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
-        try {
-          slide.scrollIntoView({ behavior: 'auto', block: 'start' });
-        } catch { /* ignore */ }
-        await new Promise((r) => setTimeout(r, 250));
+
+        // Rolar para o slide DENTRO do container de preview, não na window
+        const previewContainer = document.querySelector('.print-area') as HTMLElement;
+        if (previewContainer) {
+          const slideTop = slide.offsetTop;
+          previewContainer.scrollTop = slideTop;
+        }
+
+        await new Promise(r => setTimeout(r, 300));
 
         const canvas = await html2canvas(slide, {
           scale: 2,
@@ -350,18 +353,21 @@ const ProposalEditor: React.FC = () => {
           allowTaint: true,
           backgroundColor: null,
           logging: false,
-          imageTimeout: 15000,
-          scrollX: -window.scrollX,
-          scrollY: -window.scrollY,
-          windowWidth: document.documentElement.offsetWidth,
-          windowHeight: document.documentElement.offsetHeight,
+          imageTimeout: 20000,
+          width: 1280,
+          height: 720,
+          windowWidth: 1280,
+          windowHeight: 720,
+          scrollX: 0,
+          scrollY: 0,
           ignoreElements: (el) => {
             const e = el as HTMLElement;
             if (!e.getAttribute) return false;
-            if (e.getAttribute('data-html2canvas-ignore') === 'true') return true;
-            if (e.getAttribute('data-pdf-exclude') === 'true') return true;
-            if (e.classList && e.classList.contains('no-print')) return true;
-            return false;
+            return (
+              e.getAttribute('data-html2canvas-ignore') === 'true' ||
+              e.getAttribute('data-pdf-exclude') === 'true' ||
+              e.classList?.contains('no-print')
+            );
           },
         });
 
@@ -371,14 +377,15 @@ const ProposalEditor: React.FC = () => {
         pdf.addImage(imgData, 'JPEG', 0, 0, 297, 210);
       }
 
-      // Restore styles & scroll
+      // Restaurar
       if (scaleWrapper) {
-        scaleWrapper.style.transform = savedTransform || '';
-        scaleWrapper.style.width = savedWidth || '';
-        scaleWrapper.style.transformOrigin = savedOrigin || '';
+        scaleWrapper.style.transform = savedTransform;
+        scaleWrapper.style.width = savedWidth;
+        scaleWrapper.style.transformOrigin = savedOrigin;
       }
-      if (scrollContainer) scrollContainer.scrollTop = savedScrollTop;
-      window.scrollTo({ top: 0, behavior: 'auto' });
+
+      const previewContainer = document.querySelector('.print-area') as HTMLElement;
+      if (previewContainer) previewContainer.scrollTop = 0;
 
       pdf.save('proposta.pdf');
     } catch (error) {
@@ -392,20 +399,25 @@ const ProposalEditor: React.FC = () => {
   const generateHTML = async () => {
     setIsGeneratingHTML(true);
     try {
-      const imgToBase64 = async (url: string): Promise<string> => {
-        if (!url || url.startsWith('data:')) return url;
-        try {
-          const response = await fetch(url, { mode: 'cors', cache: 'no-cache' });
-          const blob = await response.blob();
-          return await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(blob);
-          });
-        } catch {
-          return url;
-        }
+      const imgToBase64 = (url: string): Promise<string> => {
+        return new Promise((resolve) => {
+          if (!url || url.startsWith('data:')) { resolve(url); return; }
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            try {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || 800;
+              canvas.height = img.naturalHeight || 600;
+              canvas.getContext('2d')?.drawImage(img, 0, 0);
+              resolve(canvas.toDataURL('image/jpeg', 0.9));
+            } catch {
+              resolve(url);
+            }
+          };
+          img.onerror = () => resolve(url);
+          img.src = url + (url.includes('?') ? '&' : '?') + '_cb=' + Date.now();
+        });
       };
 
       const slides = Array.from(document.querySelectorAll('[data-slide]')) as HTMLElement[];
